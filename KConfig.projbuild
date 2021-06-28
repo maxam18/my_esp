@@ -1,0 +1,7 @@
+menu "My ESP Debug"
+
+    config ME_DEBUG
+        bool "me_debug print enable"
+        default n
+
+endmenu
