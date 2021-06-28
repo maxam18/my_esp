@@ -1,8 +1,26 @@
-/* General I2C functions
- * File: me_i2c.h
- * Started: Sun Jun 13 22:23:02 MSK 2021
- * Author: Max Amzarakov (maxam18 _at_ gmail _._ com)
- * Copyright (c) 2021 ..."
+/**
+ * @brief My ESP (me) General I2C master functions
+ * @file me_i2c.h
+ * @since Sun Jun 13 22:23:02 MSK 2021
+ * @author Max Amzarakov (maxam18 _at_ gmail _._ com)
+ * @details general purpose i2c read write functions
+ *          the library has internal configuration for both of ESP32 
+ *          i2c ports
+ *          Call initialization function @see me_i2c_master_init
+ *          ` ESP_ERROR_CHECK(me_i2c_master_init());
+ *            me_i2c_ping();
+ *          `
+ * 
+ * Copyright (c) 2021 ... by Max Amzarakov
+ */
+
+/**
+ * @file buffer.h
+ *
+ * Interfaces to Data Buffer.
+ *
+ * This header define the interfaces of general purpose dynamic data buffer that
+ * implemented by Equinox.
  */
 
 #ifndef _ME_I2C_H

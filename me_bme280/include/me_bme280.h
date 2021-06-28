@@ -48,25 +48,25 @@
  * @brief Temp and pressure calibration data (Table 16)
  */
 typedef struct {
-	uint16_t		dig_T1; /* 0x88 - 0x9F*/
-	int16_t 		dig_T2;
-	int16_t 		dig_T3;
-	uint16_t		dig_P1;
-	int16_t 		dig_P2;
-	int16_t 		dig_P3;
-	int16_t 		dig_P4;
-	int16_t 		dig_P5;
-	int16_t 		dig_P6;
-	int16_t 		dig_P7;
-	int16_t 		dig_P8;
-	int16_t 		dig_P9;
-	char    		emtpty_reg1;
-	uint8_t 		dig_H1; /* 0xA1 */
-	int16_t 		dig_H2; /* 0xE1 - 0xE6 */
-	uint8_t 		dig_H3;
-	int16_t 		dig_H4;
-	int16_t 		dig_H5;
-	int8_t  		dig_H6;
+	uint16_t		dig_T1;  /*!< reg 0x88 - 0x89 0x9F*/
+	int16_t 		dig_T2;  /*!< reg 0x8A - 0x8B  */      
+	int16_t 		dig_T3;  /*!< reg 0x8C - 0x8D  */      
+	uint16_t		dig_P1;  /*!< reg 0x8E - 0x8F  */      
+	int16_t 		dig_P2;  /*!< reg 0x90 - 0x91  */      
+	int16_t 		dig_P3;  /*!< reg 0x92 - 0x93  */      
+	int16_t 		dig_P4;  /*!< reg 0x94 - 0x95  */      
+	int16_t 		dig_P5;  /*!< reg 0x96 - 0x97  */      
+	int16_t 		dig_P6;  /*!< reg 0x98 - 0x99  */      
+	int16_t 		dig_P7;  /*!< reg 0x9A - 0x9B  */      
+	int16_t 		dig_P8;  /*!< reg 0x9C - 0x9D  */      
+	int16_t 		dig_P9;  /*!< reg 0x9E - 0x9F  */      
+	char    		e;       /*!< A0 - alignment   */
+	uint8_t 		dig_H1;  /*!< 0xA1             */
+	int16_t 		dig_H2;  /*!< 0xE1 - 0xE2      */
+	uint8_t 		dig_H3;  /*!< 0xE3             */
+	int16_t 		dig_H4;  /*!< 0xE4 - 0xE5[3-0] */
+	int16_t 		dig_H5;  /*!< 0xE5[7:4] - 0xE6 */
+	int8_t  		dig_H6;  /*!< 0xE7             */
 } me_bme280_calib_t;
 
 /**
@@ -82,9 +82,9 @@ typedef struct {
  * @brief BME280 configuration 
  */
 typedef struct {
-    me_bme280_calib_t  calib;       /*!< calibration data */
-    i2c_port_t         port;        /*!< I2C bus number */
-    uint8_t            addr;        /*!< I2C sensor's slave address */
+    me_bme280_calib_t  calib;    /*!< calibration data */
+    i2c_port_t         port;     /*!< I2C bus number */
+    uint8_t            addr;     /*!< I2C sensor's slave address */
 } me_bme280_conf_t;
 
 /**

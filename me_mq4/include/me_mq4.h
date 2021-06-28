@@ -11,10 +11,9 @@
 /**
  * @brief MQ series sensor calibration parameters
  */
-
 typedef struct {
-    double      mV_ref;
-    double      divider; /* (Vref/V@Ro - 1) */
+    double      mV_ref;  /*!< reference voltage */
+    double      divider; /*!< (Vref/V\@Ro - 1) */
 } me_mq4_t;
 
 /**

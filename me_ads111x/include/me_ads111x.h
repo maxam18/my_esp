@@ -43,12 +43,12 @@ typedef enum {  ME_ADS111x_CHIP_1115
  */
 typedef struct 
 {
-    me_ads111x_chip_t   chip;
-    i2c_port_t          port;
-    uint8_t             addr;
-    uint8_t             reg;
-    uint16_t            cur;
-    uint16_t            set;
+    me_ads111x_chip_t   chip; /*!< ADS chip. Only 1115 has mux and pge */
+    i2c_port_t          port; /*!< I2C port ADS connected to */
+    uint8_t             addr; /*!< i2c slave address of ADS. see `ME_ADS111x_ADDR_...` */
+    uint8_t             reg;  /*!< latest accessed register */
+    uint16_t            cur;  /*!< current configuration set */
+    uint16_t            set;  /*!< requrested configuration set */
 } me_ads111x_conf_t;
 
 /**
