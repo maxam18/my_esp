@@ -29,7 +29,7 @@
 #define ME_BME280_FILTER_COEFF_16      	0x04
 
 /**
- * #@brief oversampling setup
+ * @brief oversampling setup
  */
 #define ME_BME280_OVERSAMPLE_HUM		ME_BME280_OVERSAMPLING_1X
 #define ME_BME280_OVERSAMPLE_TEMP		(ME_BME280_OVERSAMPLING_2X << 5)

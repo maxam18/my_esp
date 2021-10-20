@@ -1,7 +1,17 @@
-menu "My ESP Debug"
-
+menu "My ESP configurations"
     config ME_DEBUG
-        bool "me_debug print enable"
+        bool "Enable My ESP Debug"
         default n
 
+    config ME_WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) for the example to connect to.
+
+    config ME_WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
 endmenu
