@@ -18,12 +18,14 @@ static void read_calibration(me_asensor_t *sensor)
 {
     nvs_handle  store;
     esp_err_t   err;
-    size_t      store_sz;
+    size_t      store_sz = 0;
 
     err = nvs_open("my_esp", NVS_READONLY, &store);
     if (err != ESP_OK)
     {
-        ESP_LOGW(TAG, "Warning (%s) opening NVS handle. Using defaults.", esp_err_to_name(err));
+        ESP_LOGW(TAG, "Warning (%s) opening NVS handle for %s. Using defaults."
+                    , esp_err_to_name(err)
+                    , sensor->name);
         return;
     }
 
@@ -35,17 +37,23 @@ static void read_calibration(me_asensor_t *sensor)
         err = nvs_get_blob(store, sensor->name, sensor->points, &store_sz);
         switch (err) {
             case ESP_OK:
-                ESP_LOGI(TAG, "Calibration data read from storage");
+                ESP_LOGI(TAG, "Calibration data of %s read from storage"
+                            , sensor->name);
                 break;
             case ESP_ERR_NVS_NOT_FOUND:
-                ESP_LOGW(TAG, "No calibration data found in store. Using defaults.");
+                ESP_LOGW(TAG, "No calibration data of %s found in store. Using defaults."
+                            , sensor->name);
                 break;
             default :
-                ESP_LOGE(TAG, "Error (%s) reading store!", esp_err_to_name(err));
+                ESP_LOGE(TAG, "Error (%s) reading store for %s!"
+                            , esp_err_to_name(err)
+                            , sensor->name);
                 break;
         }
     } else
-        ESP_LOGE(TAG, "Size is not equal if Ok: %s", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Cannot open calibration store for %s or different size: %s"
+                    , sensor->name
+                    , esp_err_to_name(err));
 
     nvs_close(store);
 }
@@ -59,128 +67,174 @@ static void write_calibration(me_asensor_t *sensor)
     err = nvs_open("my_esp", NVS_READWRITE, &store);
     if (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "Error (%s) opening NVS handle!", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Error (%s) opening NVS handle for sensor %s!"
+                    , esp_err_to_name(err)
+                    , sensor->name);
         return;
     }
 
     err = nvs_set_blob(store, sensor->name, sensor->points, store_sz);
     if (err ==  ESP_OK ) {
-        ESP_LOGI(TAG, "Calibration data written to the storage");
+        ESP_LOGI(TAG, "Calibration data of %s written to the storage"
+                    , sensor->name);
         nvs_commit(store);
     }
     else
-        ESP_LOGE(TAG, "Error writting to storage (%s)!", esp_err_to_name(err));
+        ESP_LOGE(TAG, "Error writting %s calibration to storage (%s)!"
+                    , sensor->name
+                    , esp_err_to_name(err));
 
     nvs_close(store);
 }
 
-me_asensor_t *me_asensor_init(const char *name, uint8_t length, me_asensor_t *buf)
-{
-    me_asensor_t   *sensor;
-
-    if( !buf ) {
-        sensor = malloc(sizeof(me_asensor_t));
-        sensor->name = malloc(strlen(name)+1);
-        sensor->points = malloc(sizeof(me_asensor_span_t)*length);
-        sensor->length = length;
-    } else
-        sensor = buf;
-
-    bzero(sensor->points, sizeof(me_asensor_span_t)*sensor->length);
-    
-    read_calibration(sensor);
-
-    return sensor;
-}
-
 void me_asensor_clear(me_asensor_t *sensor)
 {
-    bzero(sensor->points, sizeof(me_asensor_span_t)*sensor->length);
+    me_asensor_span_t   *span;
+    uint8_t              len;
+
+    bzero(sensor->points, sizeof(me_asensor_span_t) * sensor->length);
+
+    span = sensor->points;
+    len  = sensor->length;
+    while( len-- )
+        (span++)->x = ME_ASENSOR_X_MIN;
 
     write_calibration(sensor);
 }
 
 double me_asensor_value(me_asensor_t *sensor, int16_t x)
 {
-    int               i = sensor->length;
-    me_asensor_span_t   *point = sensor->points;
+    me_asensor_span_t   *span = sensor->points;
+    uint8_t              len  = sensor->length;
 
-    for(; i > 0; i--, point++ )
-        if( x > point->x )
-            return x * point->k + point->c;
+    while( len-- ) {
+        if( x > span->x )
+            return x * span->k + span->c;
+        span++;
+    }
 
     return 0;
 }
 
+static void reset_kc(me_asensor_span_t *from, me_asensor_span_t *to)
+{
+    double           div;
+
+    div = (from->x - to->x);
+    if( !div )
+        return;
+
+    to->k = (from->y - to->y) / div;
+    to->c = to->y - to->k * to->x;
+}
+
 esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
 {
-    size_t           len;
-    uint8_t          i;
-    double           div;
-    me_asensor_span_t  *spanp, *spanr, *points;
+    int8_t              len;
+    me_asensor_span_t  *lp, *rp, *swap, min;
 
-    len = sizeof(me_asensor_span_t) * (sensor->length + 1);
-    points = malloc(len);
-    memcpy( points + 1, sensor->points, len);
-
-    for(    i = sensor->length - 1
-            , spanp = points + 1
-            , spanr = points
-        ;   i > 0
-        ;   i--
-            , spanp++
-            , spanr++)
-    {
-        if( span->y > spanp->y )
-            break;
-        memcpy(spanr, spanp, sizeof(me_asensor_span_t));
-    }
-
-    memcpy(spanr, span, sizeof(me_asensor_span_t));
+    len    = sensor->length - 1;
     
-    if( span->y == spanp->y )
-        for( span = spanp; i-- > 0; span++ )
-            memcpy(span, span+1, sizeof(me_asensor_span_t));
+    lp = sensor->points;
+    for(; len; lp++, len-- )
+        if( span->y >= lp->y )
+            break;
 
-    span = spanr - 1;
-    if( span >= points )
+    if( len == 0 )
+        return ESP_FAIL;
+
+    if( lp->x != ME_ASENSOR_X_MIN )
+        reset_kc(span, lp);
+
+    if( lp == sensor->points )
     {
-        div = (span->x - spanr->x);
-        if( !div )
+        span->k = lp->k;
+        span->c = lp->c;
+    } else 
+        reset_kc(lp-1, span);
+
+    if( len == 1 || span->y == lp->y )
+    {
+        reset_kc(span, lp+1);
+
+        memcpy(lp, span, sizeof(me_asensor_span_t));
+    } else {
+        rp = sensor->points + sensor->length - 1;
+        while( rp != lp )
         {
-            free(points);
-            return ESP_FAIL;
+            swap = rp--;
+            memcpy(swap, rp, sizeof(me_asensor_span_t));
         }
-        spanr->k = (span->y - spanr->y) / div;
-        spanr->c = spanr->y - spanr->k * spanr->x;
-    } else
-    {
-        spanr->k = 0;
-        spanr->c = spanr->y;
+
+        memcpy(rp, span, sizeof(me_asensor_span_t));
     }
 
-    span = spanr + 1;
-    if( spanr < points + sensor->length - 1 )
+    /* reset bottom */
+    len   = sensor->length - 1;
+    span  = sensor->points;
+    min.x = ME_ASENSOR_X_MIN;
+    min.k = span->k;
+    min.c = span->c;
+
+    while( len-- )
     {
-        div = (spanp->x - spanr->x);
-        if( !div ) {
-            free(points);
-            return ESP_FAIL;
-        }
-        spanp->k = (spanr->y - spanp->y) / div;
-        spanp->c = spanp->y - spanp->k * spanp->x;
-    } else
-    {
-        spanp->k = 0;
-        spanp->c = spanp->y;
+        if( span->x == ME_ASENSOR_X_MIN )
+            break;
+        min.k = span->k;
+        min.c = span->c;
+        span++;
     }
 
-    memcpy(sensor->points, points, len);
-    free(points);
+    span->x = ME_ASENSOR_X_MIN;
+    span->k = min.k;
+    span->c = min.c;
+
+    /* reset top */
+    span = sensor->points + 1;
+    if( span->x != ME_ASENSOR_X_MIN )
+    {
+        sensor->points->k = span->k;
+        sensor->points->c = span->c;
+    }
 
     write_calibration(sensor);
 
     return ESP_OK;
 }
 
+me_asensor_t *me_asensor_init(const char *name, uint8_t length, me_asensor_t *sb)
+{
+    me_asensor_t       *sensor;
+    me_asensor_span_t  *span;
+    void               *nb, *pb;
 
+    if( name == NULL || length < 2 )
+        return NULL;
+
+    if( !sb ) {
+        sb = malloc(sizeof(me_asensor_t));
+        nb = malloc(strlen(name) + 1);
+        pb = malloc(sizeof(me_asensor_span_t) * length);
+        if( sb == NULL || nb == NULL || pb == NULL )
+        {
+            ESP_LOGE(TAG, "Memory allocation for asensor");
+            return NULL;
+        }
+        sensor         = sb;
+        sensor->name   = nb;
+        sensor->points = pb;
+        sensor->length = length;
+        strcpy(sensor->name, name);
+    } else
+        sensor = sb;
+
+    bzero(sensor->points, sizeof(me_asensor_span_t) * sensor->length);
+    
+    span = sensor->points;
+    while( length-- )
+        (span++)->x = ME_ASENSOR_X_MIN;
+
+    read_calibration(sensor);
+
+    return sensor;
+}
