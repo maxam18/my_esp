@@ -5,13 +5,27 @@ menu "My ESP configurations"
 
     config ME_WIFI_SSID
         string "WiFi SSID"
-        default "myssid"
+        default "messid"
         help
             SSID (network name) for the example to connect to.
 
     config ME_WIFI_PASSWORD
         string "WiFi Password"
-        default "mypassword"
+        default "mepassword"
         help
-            WiFi password (WPA or WPA2) for the example to use.
+            WiFi password (WPA or WPA2). Leave blank for AP without credentials
+
+    config ME_WIFI_CHANNEL
+        int "WiFi channel"
+        default 7
+        range 1 14
+        help
+            WiFi channel for soft AP.
+
+    config ME_WIFI_AP_MAX
+        int "Maximum AP connections"
+        default 4
+        range 1 10
+        help
+            WiFi AP maximum number of connected stations allowed
 endmenu
