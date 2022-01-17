@@ -30,9 +30,13 @@ esp_err_t me_mh741_read(i2c_port_t port, int *value)
     uint8_t             req[] = {  0x96, 0x00, 0x00, 0x00, 0x00 
                                  , 0x00, 0x00, 0x00, 0x00, 0x6A };
     uint8_t             resp[10];
+    static int8_t       cnt = 5;
 
-    if( last_cmd[port] == MH741_CONC )
+    if( last_cmd[port] == MH741_CONC && cnt-- )
+    {
         err = me_i2c_read(port, MH741_ADDR, resp, 10);
+        cnt = 5;
+    }
     else
     {
         err = me_i2c_req_resp(port, MH741_ADDR, req, 10, resp, 10);
@@ -45,7 +49,10 @@ esp_err_t me_mh741_read(i2c_port_t port, int *value)
     }
 
     if( err != ESP_OK )
+    {
+        last_cmd[port] = MH741_UNKN;
         return err;
+    }
 
     if( resp[9] == checksum(resp) )
     {
