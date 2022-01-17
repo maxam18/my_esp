@@ -131,7 +131,7 @@ static void reset_kc(me_asensor_span_t *from, me_asensor_span_t *to)
 esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
 {
     int8_t              len;
-    me_asensor_span_t  *lp, *rp, *swap, min;
+    me_asensor_span_t  *lp, *rp, *swap;
 
     len    = sensor->length - 1;
     
@@ -143,20 +143,8 @@ esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
     if( len == 0 )
         return ESP_FAIL;
 
-    if( lp->x != ME_ASENSOR_X_MIN )
-        reset_kc(span, lp);
-
-    if( lp == sensor->points )
+    if( span->y == lp->y )
     {
-        span->k = lp->k;
-        span->c = lp->c;
-    } else 
-        reset_kc(lp-1, span);
-
-    if( len == 1 || span->y == lp->y )
-    {
-        reset_kc(span, lp+1);
-
         memcpy(lp, span, sizeof(me_asensor_span_t));
     } else {
         rp = sensor->points + sensor->length - 1;
@@ -169,33 +157,27 @@ esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
         memcpy(rp, span, sizeof(me_asensor_span_t));
     }
 
-    /* reset bottom */
-    len   = sensor->length - 1;
-    span  = sensor->points;
-    min.x = ME_ASENSOR_X_MIN;
-    min.k = span->k;
-    min.c = span->c;
+    /* reset bottom and all */
+    len = sensor->length - 1;
+    lp  = sensor->points;
+    rp  = lp + 1;
 
     while( len-- )
-    {
-        if( span->x == ME_ASENSOR_X_MIN )
+        if( rp->x == ME_ASENSOR_X_MIN )
+        {
+            rp->k = lp->k;
+            rp->c = lp->c;
+            lp++;
             break;
-        min.k = span->k;
-        min.c = span->c;
-        span++;
-    }
-
-    span->x = ME_ASENSOR_X_MIN;
-    span->k = min.k;
-    span->c = min.c;
+        }
+        else
+            reset_kc(lp++, rp++);
+    lp->x = ME_ASENSOR_X_MIN;
 
     /* reset top */
-    span = sensor->points + 1;
-    if( span->x != ME_ASENSOR_X_MIN )
-    {
-        sensor->points->k = span->k;
-        sensor->points->c = span->c;
-    }
+    rp = sensor->points + 1;
+    sensor->points->k = rp->k;
+    sensor->points->c = rp->c;
 
     write_calibration(sensor);
 
