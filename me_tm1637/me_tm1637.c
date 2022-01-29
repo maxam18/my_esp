@@ -1,5 +1,4 @@
 /**
- * Based on Petro's lib https://github.com/petrows/esp-32-me_tm1637
  */
 
 
@@ -36,7 +35,7 @@ static const int8_t me_tm1637_symbols[] = {
     0x71, /* X111 0001 - F */
     0x01, /* X000 0001 - cannot show */ 
     0x77, /* X111 0111 - A */
-    0x7c, /* X111 1100 - b */
+    0x7C, /* X111 1100 - b */
     0x39, /* X011 1001 - C */
     0x5e, /* X101 1110 - d */
     0x79, /* X111 1001 - E */
@@ -50,7 +49,7 @@ static const int8_t me_tm1637_symbols[] = {
     0x38, /* X011 1000 - L */
     0x01, /* X000 0001 - cannot show */
     0x54, /* X101 0100 - N */
-    0x3F, /* X011 1111 - O */
+    0x5C, /* X101 1100 - o */
     0x73, /* X111 0011 - P */
     0x67, /* X110 0111 - Q */
     0x50, /* X101 0000 - R */
@@ -64,67 +63,98 @@ static const int8_t me_tm1637_symbols[] = {
     0x01, /* X000 0001 - cannot show */
 };
 
-static void me_tm1637_start(me_tm1637_led_t * led);
-static void me_tm1637_stop(me_tm1637_led_t * led);
-static void me_tm1637_send_byte(me_tm1637_led_t * led, uint8_t byte);
+static void me_tm1637_start(me_tm1637_led_t *led);
+static void me_tm1637_stop(me_tm1637_led_t *led);
+static void me_tm1637_send_byte(me_tm1637_led_t *led, uint8_t byte);
+static void me_tm1637_send_buf(me_tm1637_led_t * led, uint8_t *buf);
 
 static const uint8_t seg_pos[][8] = {
                     { 3, 2, 1, 0, TM1637_SEG_MAX, TM1637_SEG_MAX, TM1637_SEG_MAX, TM1637_SEG_MAX },
                     { 3, 4, 5, 0, 1, 2, TM1637_SEG_MAX, TM1637_SEG_MAX }
 };
 
-#define me_tm1637_delay()          ets_delay_us(3)
+//#define me_tm1637_delay()          ets_delay_us(3)
+#define me_tm1637_delay()          ets_delay_us(20)
 
-void me_tm1637_start(me_tm1637_led_t * led)
+static void me_tm1637_start(me_tm1637_led_t * led)
 {
-    // Send start signal
-    // Both outputs are expected to be HIGH beforehand
+    gpio_set_level(led->m_pin_dta, 1);
+    gpio_set_level(led->m_pin_clk, 1);
+    me_tm1637_delay();
     gpio_set_level(led->m_pin_dta, 0);
     me_tm1637_delay();
 }
 
-void me_tm1637_stop(me_tm1637_led_t * led)
+static void me_tm1637_stop(me_tm1637_led_t * led)
 {
-    // Send stop signal
-    // CLK is expected to be LOW beforehand
-    gpio_set_level(led->m_pin_dta, 0);
-    me_tm1637_delay();
     gpio_set_level(led->m_pin_clk, 1);
     me_tm1637_delay();
     gpio_set_level(led->m_pin_dta, 1);
     me_tm1637_delay();
 }
 
-void me_tm1637_send_byte(me_tm1637_led_t * led, uint8_t byte)
+static void me_tm1637_send_byte(me_tm1637_led_t * led, uint8_t byte)
 {
-    for (uint8_t i=0; i<8; ++i)
+    uint8_t bit = 8;
+    //gpio_set_level(led->m_pin_clk, 1);
+    while( bit-- )
     {
         gpio_set_level(led->m_pin_clk, 0);
         me_tm1637_delay();
-        gpio_set_level(led->m_pin_dta, byte & 0x01); // Send current bit
-        byte >>= 1;
+        gpio_set_level(led->m_pin_dta, byte & 0x01);
         me_tm1637_delay();
         gpio_set_level(led->m_pin_clk, 1);
         me_tm1637_delay();
+        byte >>= 1;
     }
 
-    // The TM1637 signals an ACK by pulling DIO low from the falling edge of
-    // CLK after sending the 8th bit, to the next falling edge of CLK.
-    // DIO needs to be set as input during this time to avoid having both
-    // chips trying to drive DIO at the same time.
-    gpio_set_direction(led->m_pin_dta, GPIO_MODE_INPUT);
-    gpio_set_level(led->m_pin_clk, 0); // TM1637 starts ACK (pulls DIO low)
+    // TODO: We can check ACK by reversing output.
+    //gpio_set_direction(led->m_pin_dta, GPIO_MODE_INPUT);
+    gpio_set_level(led->m_pin_clk, 0); // ACK begins (TM pulls DIO low)
+    gpio_set_level(led->m_pin_dta, 0); // to not interfere
     me_tm1637_delay();
-    gpio_set_level(led->m_pin_clk, 1);
+    gpio_set_level(led->m_pin_clk, 1); // ACK ends (TM releases DIO)
     me_tm1637_delay();
-    gpio_set_level(led->m_pin_clk, 0); // TM1637 ends ACK (releasing DIO)
+    gpio_set_level(led->m_pin_clk, 0);
     me_tm1637_delay();
-    gpio_set_direction(led->m_pin_dta, GPIO_MODE_OUTPUT);
+    //gpio_set_direction(led->m_pin_dta, GPIO_MODE_OUTPUT);
+}
+
+static void me_tm1637_send_buf(me_tm1637_led_t * led, uint8_t *buf)
+{
+    const uint8_t *seg = led->seq;
+
+    me_tm1637_start(led);
+    me_tm1637_send_byte(led, TM1637_ADDR_AUTO);
+    me_tm1637_stop(led);
+
+    me_tm1637_start(led);
+    me_tm1637_send_byte(led, 0xc0);
+    while( *seg++ != TM1637_SEG_MAX )
+        me_tm1637_send_byte(led, *buf++);
+    me_tm1637_stop(led);
 }
 
 // PUBLIC
 
-me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model) {
+void me_tm1637_reset(me_tm1637_led_t *led)
+{
+
+    gpio_set_direction(led->m_pin_clk, GPIO_MODE_OUTPUT);
+    gpio_set_direction(led->m_pin_dta, GPIO_MODE_OUTPUT);
+
+    gpio_set_level(led->m_pin_clk, 0);
+    gpio_set_level(led->m_pin_dta, 0);
+    me_tm1637_delay();
+    gpio_set_level(led->m_pin_clk, 1);
+    me_tm1637_delay();
+    gpio_set_level(led->m_pin_dta, 1);
+    me_tm1637_delay();
+    me_tm1637_set_brightness(led, 0x88);
+}
+
+me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model)
+{
     me_tm1637_led_t * led = (me_tm1637_led_t *) malloc(sizeof(me_tm1637_led_t));
 
     led->m_pin_clk      = pin_clk;
@@ -132,14 +162,7 @@ me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm16
     led->seq            = seg_pos[model];
 
     // Set CLK to low during DIO initialization to avoid sending a start signal by mistake
-    gpio_set_direction(pin_clk, GPIO_MODE_OUTPUT);
-    gpio_set_level(pin_clk, 0);
-    me_tm1637_delay();
-    gpio_set_direction(pin_data, GPIO_MODE_OUTPUT);
-    gpio_set_level(pin_data, 1);
-    me_tm1637_delay();
-    gpio_set_level(pin_clk, 1);
-    me_tm1637_delay();
+    me_tm1637_reset(led);
 
     return led;
 }
@@ -153,21 +176,12 @@ void me_tm1637_set_brightness(me_tm1637_led_t * led, uint8_t level)
 
 void me_tm1637_set_segment(me_tm1637_led_t * led, const uint8_t segment_idx, const uint8_t ch, const bool dot)
 {
-    uint8_t seg_data = 0x00;
+    uint8_t data;
 
-    if (ch < (sizeof(me_tm1637_symbols)/sizeof(me_tm1637_symbols[0]))) {
-        seg_data = me_tm1637_symbols[ch];
-    }
+    data = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+    if( dot )
+        data |= 0x80;
 
-    if (dot) {
-        seg_data |= 0x80; // Set DOT segment flag
-    }
-
-    me_tm1637_set_segment_raw(led, segment_idx, seg_data);
-}
-
-void me_tm1637_set_segment_raw(me_tm1637_led_t * led, const uint8_t segment_idx, const uint8_t data)
-{
     me_tm1637_start(led);
     me_tm1637_send_byte(led, TM1637_ADDR_FIXED);
     me_tm1637_stop(led);
@@ -177,11 +191,13 @@ void me_tm1637_set_segment_raw(me_tm1637_led_t * led, const uint8_t segment_idx,
     me_tm1637_stop(led);
 }
 
-void me_tm1637_set_number_lead_dot(me_tm1637_led_t * led, int32_t number, bool lead_zero, int8_t dot_pos)
+
+void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_zero, int8_t dot_pos)
 {
     const uint8_t     *seq = led->seq;
     uint8_t            seg = *seq;
-    uint8_t            is_neg = 0;
+    uint8_t            is_neg = 0, ch;
+    uint8_t            buf[6] = {0,0,0,0,0,0};
 
     if( number < 0 )
     {
@@ -191,7 +207,11 @@ void me_tm1637_set_number_lead_dot(me_tm1637_led_t * led, int32_t number, bool l
 
     while( 1 )
     {
-        me_tm1637_set_segment(led, seg, number % 10, (dot_pos-- == 0));
+        ch = number % 10;
+        ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+        if( dot_pos-- == 0 )
+            ch |= 0x80;
+        buf[seg] = ch;
 
         number /= 10;
         if( number == 0 && !lead_zero )
@@ -206,8 +226,10 @@ void me_tm1637_set_number_lead_dot(me_tm1637_led_t * led, int32_t number, bool l
     {
         if( seg == TM1637_SEG_MAX )
             seg = *(--seq);
-        me_tm1637_set_segment_raw(led, seg, TM1637_SYM_MINUS);
+        buf[seg] = TM1637_SYM_MINUS;
     }
+
+    me_tm1637_send_buf(led, buf);
 }
 
 void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
@@ -215,7 +237,9 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
     const uint8_t     *seq = led->seq;
     uint8_t            seg = *seq;
     uint8_t            ch, dot = 0;
+    uint8_t            buf[6] = {0,0,0,0,0,0};
     
+
     while( chars-- )
     {
         ch = text[chars];
@@ -228,11 +252,17 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
         else
             ch -= '0';
 
-        me_tm1637_set_segment(led, seg, ch, dot);
-        dot = 0;
+        ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+        if( dot )
+        {
+            ch |= 0x80;
+            dot = 0;
+        }
+        buf[seg] = ch;
 
         seg = *(++seq);
         if( seg == TM1637_SEG_MAX )
             break;
     }
+    me_tm1637_send_buf(led, buf);
 }

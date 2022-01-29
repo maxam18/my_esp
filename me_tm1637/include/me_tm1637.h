@@ -3,8 +3,7 @@
  * Started: Thu Nov 25 22:22:48 MSK 2021
  * Author: Max Amzarakov (maxam18 _at_ gmail _._ com)
  * 
- * Based on tm1637 of Petro <petro@petro.ws> https://github.com/petrows/esp-32-tm1637
- * This version includes supprot of 6digits display
+ * 4digits, 6digits support
  */
 
 #ifndef _ME_TM1637_H
@@ -20,7 +19,7 @@ extern "C" {
 
 typedef enum {
 	TM1637_4SEGS,
-	TM1637_6SEGS_GM
+	TM1637_6SEGS_DM
 } me_tm1637_led_model_t;
 
 typedef struct {
@@ -37,16 +36,23 @@ typedef struct {
  * @param pin_clk GPIO pin for CLK input of LED module
  * @param pin_data GPIO pin for DIO input of LED module
  * @param model led model
- * @return
+ * @return LED object
  */
 me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model);
+
+/**
+ * @brief Reset LED TM1637
+ *
+ * @param led LED object
+ */
+void me_tm1637_reset(me_tm1637_led_t *led);
 
 /**
  * @brief Set brightness level. Note - will be set after next display render
  * @param led LED object
  * @param level Brightness level 0..7 value
  */
-void me_tm1637_set_brightness(me_tm1637_led_t * led, uint8_t level);
+void me_tm1637_set_brightness(me_tm1637_led_t *led, uint8_t level);
 //#define me_tm1637_set_brightness(led,level) 	(led)->m_brightness = (level) & 0x07
 
 /**
@@ -56,22 +62,14 @@ void me_tm1637_set_brightness(me_tm1637_led_t * led, uint8_t level);
  * @param ch char to display. Available chars from ASCII '0' to ASCII 'Z'
  * @param dot Display dot of this segment
  */
-void me_tm1637_set_segment(me_tm1637_led_t * led, const uint8_t segment_idx, const uint8_t ch, const bool dot);
-
-/**
- * @brief Set one-segment raw segment data
- * @param led LED object
- * @param segment_idx Segment index (0..3)
- * @param data Raw data, bitmask is XGFEDCBA
- */
-void me_tm1637_set_segment_raw(me_tm1637_led_t * led, const uint8_t segment_idx, const uint8_t data);
+void me_tm1637_set_segment(me_tm1637_led_t *led, const uint8_t segment_idx, const uint8_t ch, const bool dot);
 
 /**
  * @brief Set full display number, in decimal encoding
  * @param led LED object
  * @param number Display number (0...9999)
  */
-#define me_tm1637_set_number(led, number) me_tm1637_set_number_lead_dot(led, number, false, TM1637_SEG_MAX)
+#define me_tm1637_set_number(led, number) me_tm1637_set_number_dot(led, number, false, TM1637_SEG_MAX)
 
 /**
  * @brief Set full display number, in decimal encoding + control leading zero
@@ -79,7 +77,7 @@ void me_tm1637_set_segment_raw(me_tm1637_led_t * led, const uint8_t segment_idx,
  * @param number Display number (0...9999)
  * @param lead_zero Display leading zero(s)
  */
-#define me_tm1637_set_number_lead(led, number, lead_zero) me_tm1637_set_number_lead_dot(led, number, lead_zero, TM1637_SEG_MAX)
+#define me_tm1637_set_number_lead(led, number, lead_zero) me_tm1637_set_number_dot(led, number, lead_zero, TM1637_SEG_MAX)
 
 /**
  * @brief Set full display number, in decimal encoding + control leading zero + control dot display
@@ -88,7 +86,7 @@ void me_tm1637_set_segment_raw(me_tm1637_led_t * led, const uint8_t segment_idx,
  * @param lead_zero Display leading zero(s)
  * @param dot_mask Dot mask, bits left-to-right
  */
-void me_tm1637_set_number_lead_dot(me_tm1637_led_t * led, int32_t number, const bool lead_zero, int8_t dot_pos);
+void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, const bool lead_zero, int8_t dot_pos);
 
 /**
  * @brief Set floating point number, correctly handling negative numbers
@@ -97,7 +95,7 @@ void me_tm1637_set_number_lead_dot(me_tm1637_led_t * led, int32_t number, const 
  * @param digs number of digits after a dot (i.e. dot position)
  * @param lead_zero Display leading zero(s)
  */
-#define me_tm1637_set_float(led, n, digs, lead_zero) me_tm1637_set_number_lead_dot(led, (int)(n * (10 * digs)), lead_zero, digs)
+#define me_tm1637_set_float(led, n, digs, lead_zero) me_tm1637_set_number_dot(led, (int)(n * (10 * digs)), lead_zero, digs)
 
 /**
  * @brief Set text (available chars from ASCII '0' to ASCII 'Z')
@@ -113,4 +111,3 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars);
 
 #endif
 
-void func(void);

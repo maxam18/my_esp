@@ -4,20 +4,28 @@
  * Author: Max Amzarakov (maxam18 _at_ gmail _._ com)
  * Copyright (c) 2021 ..."
  */
-#include <stdint.h>
+
+#include <sys/types.h>
 
 #ifndef _ME_STR_H
 #define _ME_STR_H
 
+/**
+ * @brief String holder structure
+ */
 typedef struct {
-    u_char    *data;
-    size_t     len;
+    u_char    *data;  /*!< data pointer */
+    size_t     len;   /*!< string length */
 } me_str_t;
 
+/**
+ * @brief Buffer structure
+ *        Useful in constructing long strings
+ */
 typedef struct {
-    u_char    *start;
-    u_char    *pos;
-    u_char    *end;
+    u_char    *start; /*!< allocated buffer address pointer */
+    u_char    *pos;   /*!< current operation position */
+    u_char    *end;   /*!< allocated buffer end address pointer */
 } me_str_buf_t;
 
 #endif

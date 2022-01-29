@@ -52,7 +52,7 @@ esp_err_t me_i2c_master_init(i2c_port_t port, int sda_pin, int scl_pin, int spee
     i2c_get_timeout(port, &timeout);
     _ack_timeout_ticks[port] = _TICK_TIMEOUT(timeout);
 
-    me_debug( "i2c", "Timeout: %d", _ack_timeout_ticks[port]);
+    me_debug( "i2c", "Port: %d, APB timeout: %d, Timeout: %d", port, timeout,  _ack_timeout_ticks[port]);
 
     return ret;
 }
@@ -63,6 +63,8 @@ esp_err_t me_i2c_reset_timeout(i2c_port_t port, int us)
 
     timeout = APB_CYCLES_US * us;
     _ack_timeout_ticks[port] = _TICK_TIMEOUT(timeout);
+
+    me_debug( "i2c", "Port: %d, Timeout: %d", port,  _ack_timeout_ticks[port]);
 
     return i2c_set_timeout(port, timeout);
 }
