@@ -12,7 +12,7 @@
 
 #include "sdkconfig.h"
 
-#define MH_UART_BUF_SIZE        64
+#define MH_UART_BUF_SIZE        9*10
 /**
  * @brief MH series sensor short int concentration read command
  *        this is for the sensors of 0~32000 range
@@ -23,6 +23,18 @@
  *        this is for the sensors of 32000+ range
  */
 #define MH_CMD_READ_LONG        0x9C
+/**
+ * @brief MH series sensor Q&A mode
+ *        request/response mode
+ */
+#define MH_HCL_CMODE_QA         0x04
+#define MH_CH2O_CMODE_QA        0x41
+/**
+ * @brief MH series sensor active send mode
+ *        sensor sends readings repeatedly
+ */
+#define MH_HCL_CMODE_ACTIVE     0x03
+#define MH_CH2O_CMODE_ACTIVE    0x40
 
 /**
  * @brief Read Winsen-Sensor MH series (UART) sensor concentration 
@@ -69,6 +81,19 @@ int me_mhuart_auto_calibration(int uart_num, int is_on);
  *     - -1 on failure
  */
 int me_mhuart_calibrate(int uart_num, int ppm);
+
+/**
+ * @brief Set Winsen-Sensor MH series (UART) sensor to Q&A mode
+ *        sensor is always sends data by default (active mode)
+ *
+ * @param uart_num UART number
+ * @param mode UART number
+ *
+ * @return
+ *     -  0 on success
+ *     - -1 on failure
+ */
+int me_mhuart_set_mode(int uart_num, uint8_t mode);
 
 #endif
 

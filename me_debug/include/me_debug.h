@@ -9,6 +9,7 @@
 #define _ME_DEBUG_H
 
 #include <esp_log.h>
+#include <esp_err.h>
 
 #if CONFIG_ME_DEBUG
 #define me_debug(T, ...) ESP_LOGI( "ME_DBG-" T, __VA_ARGS__ )

@@ -8,12 +8,35 @@
 #include <math.h>
 #include <esp32/rom/ets_sys.h>
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+
 #include <me_tm1637.h>
 
 #define TM1637_ADDR_AUTO  0x40
 #define TM1637_ADDR_FIXED 0x44
 
 #define TM1637_SYM_MINUS    0x40 /* 0b01000000 - '-' */
+
+
+#ifdef CONFIG_TM1637_USE_LOCKS
+
+#define TM1637_LOCK_DELAY pdMS_TO_TICKS(2000)
+#define tm1637_lock_init()  \
+            if( !(tm1637_semph = xSemaphoreCreateBinary()) ) \
+                return NULL; \
+            xSemaphoreGive(tm1637_semph)
+
+#define tm1637_lock()   if( xSemaphoreTake(tm1637_semph, TM1637_LOCK_DELAY) \
+                            != pdTRUE ) \
+                            return
+#define tm1637_unlock() xSemaphoreGive(tm1637_semph)
+SemaphoreHandle_t tm1637_semph = NULL;
+#else
+#define tm1637_lock_init()
+#define tm1637_lock()
+#define tm1637_unlock()
+#endif
 
 static const int8_t me_tm1637_symbols[] = {
           /*  GFE DCBA */
@@ -96,6 +119,7 @@ static void me_tm1637_stop(me_tm1637_led_t * led)
 static void me_tm1637_send_byte(me_tm1637_led_t * led, uint8_t byte)
 {
     uint8_t bit = 8;
+    
     //gpio_set_level(led->m_pin_clk, 1);
     while( bit-- )
     {
@@ -124,21 +148,29 @@ static void me_tm1637_send_buf(me_tm1637_led_t * led, uint8_t *buf)
 {
     const uint8_t *seg = led->seq;
 
+    tm1637_lock();
+
     me_tm1637_start(led);
     me_tm1637_send_byte(led, TM1637_ADDR_AUTO);
     me_tm1637_stop(led);
 
     me_tm1637_start(led);
     me_tm1637_send_byte(led, 0xc0);
-    while( *seg++ != TM1637_SEG_MAX )
+    while( *seg != TM1637_SEG_MAX )
+    {
         me_tm1637_send_byte(led, *buf++);
+        seg++;
+    }
     me_tm1637_stop(led);
+
+    tm1637_unlock();
 }
 
 // PUBLIC
 
 void me_tm1637_reset(me_tm1637_led_t *led)
 {
+    tm1637_lock();
 
     gpio_set_direction(led->m_pin_clk, GPIO_MODE_OUTPUT);
     gpio_set_direction(led->m_pin_dta, GPIO_MODE_OUTPUT);
@@ -151,32 +183,27 @@ void me_tm1637_reset(me_tm1637_led_t *led)
     gpio_set_level(led->m_pin_dta, 1);
     me_tm1637_delay();
     me_tm1637_set_brightness(led, 0x88);
+
+    tm1637_unlock();
 }
 
-me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model)
-{
-    me_tm1637_led_t * led = (me_tm1637_led_t *) malloc(sizeof(me_tm1637_led_t));
-
-    led->m_pin_clk      = pin_clk;
-    led->m_pin_dta      = pin_data;
-    led->seq            = seg_pos[model];
-
-    // Set CLK to low during DIO initialization to avoid sending a start signal by mistake
-    me_tm1637_reset(led);
-
-    return led;
-}
 
 void me_tm1637_set_brightness(me_tm1637_led_t * led, uint8_t level)
 {
+    tm1637_lock();
+
     me_tm1637_start(led);
     me_tm1637_send_byte(led, level | 0x88);
     me_tm1637_stop(led);
+
+    tm1637_unlock();
 }
 
 void me_tm1637_set_segment(me_tm1637_led_t * led, const uint8_t segment_idx, const uint8_t ch, const bool dot)
 {
     uint8_t data;
+
+    tm1637_lock();
 
     data = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
     if( dot )
@@ -189,13 +216,14 @@ void me_tm1637_set_segment(me_tm1637_led_t * led, const uint8_t segment_idx, con
     me_tm1637_send_byte(led, segment_idx | 0xc0);
     me_tm1637_send_byte(led, data);
     me_tm1637_stop(led);
+
+    tm1637_unlock();
 }
 
 
 void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_zero, int8_t dot_pos)
 {
-    const uint8_t     *seq = led->seq;
-    uint8_t            seg = *seq;
+    const uint8_t     *seg = led->seq;
     uint8_t            is_neg = 0, ch;
     uint8_t            buf[6] = {0,0,0,0,0,0};
 
@@ -205,64 +233,81 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
         number *= (-1);
     }
 
-    while( 1 )
-    {
+    do {
         ch = number % 10;
         ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+        buf[*seg++] = ch;
+
         if( dot_pos-- == 0 )
             ch |= 0x80;
-        buf[seg] = ch;
 
         number /= 10;
-        if( number == 0 && !lead_zero )
-            break;
+    } while( number && *seg != TM1637_SEG_MAX );
 
-        seg = *(++seq);
-        if( seg == TM1637_SEG_MAX )
-            break;
+    ch = (lead_zero) ? me_tm1637_symbols[0] : 0x00;
+    for(; *seg != TM1637_SEG_MAX; seg++ )
+    {
+        if( dot_pos-- )
+            buf[*seg] = ch;
+        else
+            buf[*seg] = ch | 0x80;
     }
 
     if( is_neg )
-    {
-        if( seg == TM1637_SEG_MAX )
-            seg = *(--seq);
-        buf[seg] = TM1637_SYM_MINUS;
-    }
+        buf[*(seg - 1)] = TM1637_SYM_MINUS;
 
     me_tm1637_send_buf(led, buf);
 }
 
 void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
 {
-    const uint8_t     *seq = led->seq;
-    uint8_t            seg = *seq;
+    const uint8_t     *seg = led->seq;
     uint8_t            ch, dot = 0;
     uint8_t            buf[6] = {0,0,0,0,0,0};
-    
 
-    while( chars-- )
+    for(; *seg != TM1637_SEG_MAX; seg++ )
     {
-        ch = text[chars];
-        if( ch == '.' ) 
+        if( chars-- )
         {
-            dot = 1;
-            continue;
-        } else if( ch >= 'a' && ch <= 'z' )
-            ch -= ('a' - 'A' - '0');
-        else
-            ch -= '0';
+            ch = text[chars];
+            if( ch == '.' ) 
+            {
+                dot = 1;
+                continue;
+            } else if( ch >= 'a' && ch <= 'z' )
+                ch -= ('a' - 'A' - '0');
+            else
+                ch -= '0';
+            ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+        } else
+            ch = 0x00;
 
-        ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
         if( dot )
         {
             ch |= 0x80;
             dot = 0;
         }
-        buf[seg] = ch;
 
-        seg = *(++seq);
-        if( seg == TM1637_SEG_MAX )
-            break;
+        buf[*seg] = ch;
     }
+
     me_tm1637_send_buf(led, buf);
+}
+
+
+me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model)
+{
+    me_tm1637_led_t * led = (me_tm1637_led_t *) malloc(sizeof(me_tm1637_led_t));
+
+    led->m_pin_clk      = pin_clk;
+    led->m_pin_dta      = pin_data;
+    led->seq            = seg_pos[model];
+
+
+    tm1637_lock_init();
+
+    // Set CLK to low during DIO initialization to avoid sending a start signal by mistake
+    me_tm1637_reset(led);
+
+    return led;
 }

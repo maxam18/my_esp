@@ -64,6 +64,7 @@ typedef enum {
  * @return
  *     - ESP_OK               Success
  *     - ESP_ERR_INVALID_ARG  Parameter error
+ *     - ESP_ERR_INVALID_STATE  Duplicate initialization
  *     - ESP_FAIL             Driver install error
  */
 esp_err_t me_i2c_master_init(i2c_port_t port, int sda_pin, int scl_pin, int speed, me_i2c_pullup_t pullup);

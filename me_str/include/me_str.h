@@ -10,6 +10,8 @@
 #ifndef _ME_STR_H
 #define _ME_STR_H
 
+#define me_str(X)  { (u_char *)X, sizeof(X) - 1 }
+
 /**
  * @brief String holder structure
  */

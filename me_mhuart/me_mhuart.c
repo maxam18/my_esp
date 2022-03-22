@@ -18,6 +18,7 @@
 #define MH_CMD_CALIBRATE_AUTO   0x79
 #define MH_CMD_CALIBRATE_ZERO   0x87
 #define MH_CMD_CALIBRATE_SPAN   0x88
+#define MH_CMD_SET_MODE         0x78
 
 static const char *TAG = "MH";
 
@@ -39,6 +40,8 @@ static u_char *readwrite(int uart_num, uint8_t command, uint8_t *val, u_char *bu
 
     data = buf ? buf : sbuf;
 
+    uart_flush_input(uart_num);
+
     cmd[2] = command;
     if( val )
     {
@@ -59,7 +62,8 @@ static u_char *readwrite(int uart_num, uint8_t command, uint8_t *val, u_char *bu
         ESP_LOGE(TAG, "Send 9 but wrote %d", n);
         return NULL;
     }
-    n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, 60 / portTICK_RATE_MS);
+
+    n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, 60/portTICK_RATE_MS);
 
     me_debug( "MHUART-RW", "MH recv: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
             , (u_int)data[0], (u_int)data[1], (u_int)data[2], (u_int)data[3]
@@ -87,6 +91,7 @@ static u_char *readwrite(int uart_num, uint8_t command, uint8_t *val, u_char *bu
     return data;
 }
 
+
 int me_mhuart_read_concentration(int uart_num, uint8_t cmd)
 {
     int     n;
@@ -101,6 +106,7 @@ int me_mhuart_read_concentration(int uart_num, uint8_t cmd)
 
     return n;
 }
+
 
 int me_mhuart_auto_calibration(int uart_num, int is_on)
 {
@@ -129,5 +135,13 @@ int me_mhuart_calibrate(int uart_num, int ppm)
 
     return retval ? -1 : 0;
 }
+
+int me_mhuart_set_mode(int uart_num, uint8_t mode)
+{
+    uint8_t  val[5] = { mode, 0x00, 0x00, 0x00, 0x00 };
+
+    return readwrite(uart_num, MH_CMD_SET_MODE, val, NULL) ? -1 : 0;
+}
+
 
 

@@ -14,6 +14,7 @@
 #include <driver/i2c.h>
 
 #define ME_MCP23x17_DEF_ADDR        0x20
+#define ME_MCP23x17_ADDR1           0x21
 
 #define ME_MCP23x17_REG_IODIRA      0x00
 #define ME_MCP23x17_REG_IODIRB      0x01
