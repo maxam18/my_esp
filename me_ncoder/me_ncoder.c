@@ -7,6 +7,8 @@
 
 #include <me_debug.h>
 #include "me_ncoder.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/queue.h>
 #include <freertos/semphr.h>
 
 #define INTERVAL_US     2000
