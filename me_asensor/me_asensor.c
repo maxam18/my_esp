@@ -14,13 +14,19 @@
 
 static const char *TAG = "me_asensor";
 
+#ifdef CONFIG_ME_NVS_STORE_NAME
+static const char *nvs_name = CONFIG_ME_NVS_STORE_NAME;
+#else
+static const char *nvs_name = "my_esp";
+#endif
+
 static void read_calibration(me_asensor_t *sensor)
 {
     nvs_handle  store;
     esp_err_t   err;
     size_t      store_sz = 0;
 
-    err = nvs_open("my_esp", NVS_READONLY, &store);
+    err = nvs_open(nvs_name, NVS_READONLY, &store);
     if (err != ESP_OK)
     {
         ESP_LOGW(TAG, "Warning (%s) opening NVS handle for %s. Using defaults."
@@ -64,7 +70,7 @@ static void write_calibration(me_asensor_t *sensor)
     esp_err_t   err;
     size_t      store_sz = sizeof(me_asensor_span_t) * sensor->length;
 
-    err = nvs_open("my_esp", NVS_READWRITE, &store);
+    err = nvs_open(nvs_name, NVS_READWRITE, &store);
     if (err != ESP_OK)
     {
         ESP_LOGE(TAG, "Error (%s) opening NVS handle for sensor %s!"

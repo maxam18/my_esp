@@ -28,4 +28,8 @@ menu "My ESP configurations"
         range 1 10
         help
             WiFi AP maximum number of connected stations allowed
+
+    config ME_NVS_STORE_NAME
+        string "NVS store name"
+        default "my_esp"
 endmenu
