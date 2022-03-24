@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include <driver/gpio.h>
 #include <esp32/rom/ets_sys.h>
 
 #include <freertos/FreeRTOS.h>
@@ -297,7 +298,18 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
 
 me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm1637_led_model_t model)
 {
-    me_tm1637_led_t * led = (me_tm1637_led_t *) malloc(sizeof(me_tm1637_led_t));
+    gpio_config_t       io_conf = {
+        .mode       = GPIO_MODE_OUTPUT,
+        .intr_type  = GPIO_INTR_DISABLE,
+        .pull_down_en = 0,
+        .pull_up_en = 0,
+        .pin_bit_mask = (1ULL<<pin_clk) | (1ULL<<pin_data)
+    };
+
+    me_tm1637_led_t     *led = (me_tm1637_led_t *) malloc(sizeof(me_tm1637_led_t));
+
+    if( gpio_config(&io_conf) != ESP_OK )
+        return NULL;
 
     led->m_pin_clk      = pin_clk;
     led->m_pin_dta      = pin_data;
