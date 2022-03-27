@@ -17,22 +17,24 @@
 #define TM1637_ADDR_AUTO  0x40
 #define TM1637_ADDR_FIXED 0x44
 
-#define TM1637_SYM_MINUS    0x40 /* 0b01000000 - '-' */
+#define TM1637_SYM_MINUS    0x40 /* 0b1000 0000 - '-' */
+#define TM1637_SYM_MDASH    0x48 /* 0b1000 1000 - '-' */
+#define TM1637_SYM_DASH     0x08 /* 0b0100 1000 - '-' */
 
 
 #ifdef CONFIG_TM1637_USE_LOCKS
 
 #define TM1637_LOCK_DELAY pdMS_TO_TICKS(2000)
 #define tm1637_lock_init()  \
-            if( !(tm1637_semph = xSemaphoreCreateBinary()) ) \
+            if( !(mutex = xSemaphoreCreateMutex()) ) \
                 return NULL; \
-            xSemaphoreGive(tm1637_semph)
+            xSemaphoreGive(mutex)
 
-#define tm1637_lock()   if( xSemaphoreTake(tm1637_semph, TM1637_LOCK_DELAY) \
-                            != pdTRUE ) \
-                            return
-#define tm1637_unlock() xSemaphoreGive(tm1637_semph)
-SemaphoreHandle_t tm1637_semph = NULL;
+#define tm1637_lock()   \
+            if( !xSemaphoreTake(mutex, TM1637_LOCK_DELAY) ) \
+                return
+#define tm1637_unlock() xSemaphoreGive(mutex)
+static SemaphoreHandle_t mutex;
 #else
 #define tm1637_lock_init()
 #define tm1637_lock()
@@ -84,6 +86,11 @@ static const int8_t me_tm1637_symbols[] = {
     0x01, /* X000 0001 - cannot show */
     0x01, /* X000 0001 - cannot show */
     0x6E, /* X110 1110 - Y */
+    0x01, /* X000 0001 - Z - cannot show */
+    0x39, /* X000 0001 - [  */
+    0x64, /* X110 0100 - \  */
+    0x0F, /* X000 1111 - ]  */
+    0x08, /* X000 1000 - '_' */
     0x01, /* X000 0001 - cannot show */
 };
 
@@ -235,8 +242,7 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
     }
 
     do {
-        ch = number % 10;
-        ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
+        ch = me_tm1637_symbols[number % 10];
         buf[*seg++] = ch;
 
         if( dot_pos-- == 0 )
@@ -248,9 +254,8 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
     ch = (lead_zero) ? me_tm1637_symbols[0] : 0x00;
     for(; *seg != TM1637_SEG_MAX; seg++ )
     {
-        if( dot_pos-- )
-            buf[*seg] = ch;
-        else
+        buf[*seg] = ch;
+        if( !dot_pos-- )
             buf[*seg] = ch | 0x80;
     }
 
@@ -266,19 +271,21 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
     uint8_t            ch, dot = 0;
     uint8_t            buf[6] = {0,0,0,0,0,0};
 
-    for(; *seg != TM1637_SEG_MAX; seg++ )
+    while( *seg != TM1637_SEG_MAX )
     {
-        if( chars-- )
+        if( chars )
         {
-            ch = text[chars];
+            ch = text[--chars];
             if( ch == '.' ) 
             {
                 dot = 1;
                 continue;
-            } else if( ch >= 'a' && ch <= 'z' )
-                ch -= ('a' - 'A' - '0');
-            else
-                ch -= '0';
+            }
+
+            if( ch >= 'a' && ch <= 'z' )
+                ch -= ('a' - 'A');
+
+            ch -= '0';
             ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
         } else
             ch = 0x00;
@@ -289,7 +296,7 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
             dot = 0;
         }
 
-        buf[*seg] = ch;
+        buf[*seg++] = ch;
     }
 
     me_tm1637_send_buf(led, buf);
