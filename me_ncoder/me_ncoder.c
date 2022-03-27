@@ -100,6 +100,7 @@ static void run_encoder()
         return;
 
 send_queue:
+    me_debug("NCODER", "Send to queue: %d, ev.btn: %d, enc.btn: %d", ev.state, ev.button, enc->btn);
     ev.button = enc->btn;
     xQueueSendToBack(queue, &ev, 0);
 }
@@ -154,6 +155,7 @@ esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb,
     enc->pina = pina;
     enc->pinb = pinb;
     enc->path = 0;
+    //enc->btn  = 0;
 
     while( len-- )
         io_conf.pin_bit_mask |= 1ULL << *pins++;
