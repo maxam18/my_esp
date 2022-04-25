@@ -5,12 +5,13 @@
  * Copyright (c) 2021 ..."
  */
 
+#include <esp_system.h>
 #include <sys/types.h>
 
 #ifndef _ME_STR_H
 #define _ME_STR_H
 
-#define me_str(X)  { (u_char *)X, sizeof(X) - 1 }
+#define me_str(X)  { (u_char *)(X), sizeof(X) - 1 }
 
 /**
  * @brief String holder structure
@@ -29,5 +30,21 @@ typedef struct {
     u_char    *pos;   /*!< current operation position */
     u_char    *end;   /*!< allocated buffer end address pointer */
 } me_str_buf_t;
+
+/**
+ * @brief Convert atoi with buf len
+ * @param buf buffer 
+ * @param len text length
+ * @return signed integer 32bit
+ */
+int32_t me_atoi(unsigned char *buf, size_t len);
+
+/**
+ * @brief Convert atoi with buf len
+ * @param buf buffer 
+ * @param len text length
+ * @return double
+ */
+double me_atod(unsigned char *buf, size_t len);
 
 #endif
