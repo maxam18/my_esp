@@ -14,4 +14,12 @@
  */
 void me_wifi_init(void);
 
+/**
+ * @brief initialized wifi client with callback function
+ *        storage MUST be initialized before the call wifi_init
+ *        CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD must be set
+ */
+void me_wifi_init_cb(void (*func)(unsigned char));
+
+
 #endif

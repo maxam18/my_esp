@@ -34,12 +34,17 @@ static const char           *TAG = "WIFI";
 
 static EventGroupHandle_t    wifi_comm_event_group;
 
+static void (*got_ip_callback)(uint8_t) = NULL;
+
 static void on_got_ip(void *arg, esp_event_base_t event_base,
                       int32_t event_id, void *event_data)
 {
     ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
 
     ESP_LOGI(TAG, "Connected to " CONFIG_ME_WIFI_SSID ". Got IP " IPSTR, IP2STR(&event->ip_info.ip));
+
+    if( got_ip_callback )
+        got_ip_callback(1);
 
     xEventGroupSetBits(wifi_comm_event_group, GOT_IPv4_BIT);
 }
@@ -52,6 +57,9 @@ static void on_connection(void *arg, esp_event_base_t event_base, int32_t event_
     } else if( event_id == WIFI_EVENT_STA_DISCONNECTED )
     {
         ESP_LOGI(TAG, "Wi-Fi disconnected, trying to reconnect...");
+
+        if( got_ip_callback )
+            got_ip_callback(0);
     }
     ESP_ERROR_CHECK(esp_wifi_connect());
 }
@@ -91,7 +99,7 @@ static void start()
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-void me_wifi_init(void)
+void me_wifi_init_cb(void (*func)(uint8_t))
 {
     if (wifi_comm_event_group != NULL) {
         ESP_LOGE(TAG, "invalid state @ %s", __FUNCTION__);
@@ -100,10 +108,17 @@ void me_wifi_init(void)
 
     wifi_comm_event_group = xEventGroupCreate();
 
+    if( func == NULL )
+    {
+        xEventGroupWaitBits(wifi_comm_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+    } else 
+        got_ip_callback = func;
+
     start();
-
     ESP_LOGI(TAG, "Waiting for IP...");
-    xEventGroupWaitBits(wifi_comm_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+}
 
-    return;
+void me_wifi_init(void)
+{
+    me_wifi_init_cb(NULL);   
 }
