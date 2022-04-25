@@ -190,9 +190,10 @@ void me_tm1637_reset(me_tm1637_led_t *led)
     me_tm1637_delay();
     gpio_set_level(led->m_pin_dta, 1);
     me_tm1637_delay();
-    me_tm1637_set_brightness(led, 0x88);
 
     tm1637_unlock();
+
+    me_tm1637_set_brightness(led, 1);
 }
 
 
@@ -321,7 +322,6 @@ me_tm1637_led_t *me_tm1637_init(gpio_num_t pin_clk, gpio_num_t pin_data, me_tm16
     led->m_pin_clk      = pin_clk;
     led->m_pin_dta      = pin_data;
     led->seq            = seg_pos[model];
-
 
     tm1637_lock_init();
 
