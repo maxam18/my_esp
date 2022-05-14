@@ -68,5 +68,16 @@ void me_asensor_clear(me_asensor_t *sensor);
  */
 esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span);
 
+#ifdef CONFIG_ME_DEBUG
+/**
+ * @brief dump asensor data
+ * 
+ * @param sensor asensor pointer. Structure MUST be initialized
+ */
+void me_asensor_dump(me_asensor_t *sensor);
+#else
+#define me_asensor_dump(X)
+#endif
+
 #endif
 

@@ -6,6 +6,8 @@
  */
 #include <stdlib.h>
 #include <string.h>
+
+#include <me_debug.h>
 #include <me_asensor.h>
 
 #include "esp_system.h"
@@ -226,3 +228,41 @@ me_asensor_t *me_asensor_init(const char *name, uint8_t length, me_asensor_t *sb
 
     return sensor;
 }
+
+#ifdef CONFIG_ME_DEBUG 
+
+void me_asensor_dump(me_asensor_t *sensor)
+{
+    me_asensor_span_t   *s;
+    char                *buf, *p;
+    int                  n, l = 2048, i = sensor->length;
+    
+    buf = malloc(l);
+    if( !buf )
+    {
+        me_debug("ASENSOR", "Memory allocation failure at ab_sensor_dump");
+        return;
+    }
+    
+    n  = snprintf(buf, l, "Sensor '%s', points[%d]: [", sensor->name, i);
+    p  = buf + n;
+    l -= n;
+
+    s = sensor->points;
+    while( i-- )
+    {
+        n  = snprintf(p, l, "{ x: %d, y: %4.2f, k: %4.4f, c: %4.4f"
+                              " h: %3.1f, t: %2.2f, ts: %d }, "
+                            , s->x, s->y, s->k, s->c
+                            , s->humidity, s->temperature, s->ts );
+        p += n;
+        l -= n;
+        s++;
+    }
+    *p++ = ']';
+
+    me_debug("ASENSOR DUMP", "%.*s", (int)(p - buf), buf);
+    
+    free(buf);
+}
+#endif
