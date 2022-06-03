@@ -24,7 +24,7 @@ static uint8_t checksum(uint8_t *data)
 }
 
 
-esp_err_t me_mh741_read(i2c_port_t port, int *value)
+esp_err_t me_mh741_read(i2c_port_t port, int16_t *value)
 {
     esp_err_t           err;
     uint8_t             req[] = {  0x96, 0x00, 0x00, 0x00, 0x00 
@@ -77,19 +77,35 @@ esp_err_t me_mh741_read(i2c_port_t port, int *value)
 }
 
 
-esp_err_t me_mh741_calibrate(i2c_port_t port, int value)
+esp_err_t me_mh741_calibrate(i2c_port_t port, int ppm)
 {
-    uint8_t             req[] = {  0xA0, 0x00, 0x00, 0x00, 0x00 
-                                 , 0x00, 0x00, 0x00, 0x00, 0x60 };
+    esp_err_t   err;
+    uint8_t     req[] = {  0xA0, 0x00, 0x00, 0x00, 0x00 
+                         , 0x00, 0x00, 0x00, 0x00, 0x60 };
 
-    if( value )
+    if( ppm )
     { /* span */
-        req[1] = (value >> 8) & 0xFF;
-        req[2] = value & 0xFF;
+        req[0] = 0xAA;
+        req[1] = (ppm >> 8) & 0xFF;
+        req[2] = ppm & 0xFF;
         req[9] = checksum(req);
     }
 
     last_cmd[port] = MH741_UNKN;
 
-    return me_i2c_read(port, MH741_ADDR, req, 10);
+    err = me_i2c_write(port, MH741_ADDR, req, 10);
+    me_debug( "mh741", "Sent: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
+                            " 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
+                            ", err: %s"
+        , req[0], req[1], req[2], req[3], req[4]
+        , req[5], req[6], req[7], req[8], req[9]
+        , esp_err_to_name(err));
+
+    if( err != ESP_OK )
+    {
+        me_debug( "mh741", "Calibration write error %d: %s"
+                         , err, esp_err_to_name(err));
+    }
+
+    return err;
 }
