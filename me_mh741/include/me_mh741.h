@@ -37,11 +37,12 @@
  *     - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
  *     - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.
  */
-esp_err_t me_mh741_read(i2c_port_t port, int *value);
+esp_err_t me_mh741_read(i2c_port_t port, int16_t *value);
 
 /**
- * @brief Read concentration
- *        0-100%, 0-30% sensors will reply with %VOL * 100
+ * @brief Calibrate sensor
+ *        ppm = 0 - zero point calibration
+ *        ppm > 0 - span calibration
  *
  * @param port    I2C port number
  * @param value   PPM value. Set value to 0 for Zero point calibration 
@@ -53,7 +54,7 @@ esp_err_t me_mh741_read(i2c_port_t port, int *value);
  *     - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
  *     - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.
  */
-esp_err_t me_mh741_calibrate(i2c_port_t port, int value);
+esp_err_t me_mh741_calibrate(i2c_port_t port, int ppm);
 
 
 #endif
