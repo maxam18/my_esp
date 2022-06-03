@@ -61,10 +61,9 @@ int me_mhuart_read_concentration(int uart_num, uint8_t cmd);
  * @param is_on    should the self-calibration be set on (1) or off (0)
  *
  * @return
- *     -  0 on success
- *     - -1 on failure
+ *     esp_err_t
  */
-int me_mhuart_auto_calibration(int uart_num, int is_on);
+esp_err_t me_mhuart_auto_calibration(int uart_num, int is_on);
 
 /**
  * @brief Calibrate Winsen-Sensor MH series (UART) sensor at certain level
@@ -77,10 +76,9 @@ int me_mhuart_auto_calibration(int uart_num, int is_on);
  * @param ppm      concentration in PPM
  *
  * @return
- *     -  0 on success
- *     - -1 on failure
+ *     esp_err_t
  */
-int me_mhuart_calibrate(int uart_num, int ppm);
+esp_err_t me_mhuart_calibrate(int uart_num, int ppm);
 
 /**
  * @brief Set Winsen-Sensor MH series (UART) sensor to Q&A mode
@@ -90,10 +88,9 @@ int me_mhuart_calibrate(int uart_num, int ppm);
  * @param mode UART number
  *
  * @return
- *     -  0 on success
- *     - -1 on failure
+ *     esp_err_t
  */
-int me_mhuart_set_mode(int uart_num, uint8_t mode);
+esp_err_t me_mhuart_set_mode(int uart_num, uint8_t mode);
 
 #endif
 

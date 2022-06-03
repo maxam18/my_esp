@@ -6,6 +6,7 @@
  */
 
 #include "esp_system.h"
+#include "esp_err.h"
 #include "esp_log.h"
 
 #include "driver/uart.h"
@@ -22,6 +23,7 @@
 
 static const char *TAG = "MH";
 
+
 static uint8_t checksum(uint8_t *data)
 {
     uint8_t i, res = 0;
@@ -32,26 +34,24 @@ static uint8_t checksum(uint8_t *data)
     return (0xFF - res) + 1;
 }
 
-static u_char *readwrite(int uart_num, uint8_t command, uint8_t *val, u_char *buf)
+
+static esp_err_t send_req(int uart_num, uint8_t req, uint8_t *reqval)
 {
     int         n;
     uint8_t     cmd[] = { 0xFF, 0x01, 0x79, 0x00, 0x00, 0x00, 0x00, 0x00, 0x86 };
-    uint8_t     *data, sbuf[MH_UART_BUF_SIZE];
-
-    data = buf ? buf : sbuf;
 
     uart_flush_input(uart_num);
 
-    cmd[2] = command;
-    if( val )
+    cmd[2] = req;
+    if( reqval )
     {
         for(n = 3; n < 8; n++)
-            cmd[n] = *val++;
+            cmd[n] = *reqval++;
     }
 
     cmd[8] = checksum(cmd);
 
-    me_debug( "MHUART-RW", "MH send: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
+    me_debug( "MHUART", "Send: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
             , (u_int)cmd[0], (u_int)cmd[1], (u_int)cmd[2], (u_int)cmd[3]
             , (u_int)cmd[4], (u_int)cmd[5], (u_int)cmd[6], (u_int)cmd[7], (u_int)cmd[8]);
 
@@ -60,35 +60,37 @@ static u_char *readwrite(int uart_num, uint8_t command, uint8_t *val, u_char *bu
     if( n != 9 )
     {
         ESP_LOGE(TAG, "Send 9 but wrote %d", n);
-        return NULL;
+        return ESP_FAIL;
     }
+
+    return ESP_OK;
+}
+
+
+static esp_err_t read_resp(int uart_num, uint8_t *data)
+{
+    int    n;
 
     n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, 60/portTICK_RATE_MS);
 
-    me_debug( "MHUART-RW", "MH recv: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
+    me_debug( "MHUART", "Recv: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
             , (u_int)data[0], (u_int)data[1], (u_int)data[2], (u_int)data[3]
             , (u_int)data[4], (u_int)data[5], (u_int)data[6], (u_int)data[7], (u_int)data[8]);
 
     if( n != 9 )
     {
         ESP_LOGE(TAG, "Expect 9 but read %d", n);
-        return NULL;
+        return ESP_FAIL;
     }
 
     if( data[8] != checksum(data) )
     {
         ESP_LOGW(TAG, "CRC incorrect. 0x%02X 0x%02X 0x%02X ... 0x%02X"
                     , data[0], data[1], data[2], data[8]);
-        return NULL;
+        return ESP_FAIL;
     }
 
-    if( data[1] != command )
-    {
-        ESP_LOGE(TAG, "Command rejected. Send %X recv %X", command, data[1]);
-        return NULL;
-    }
-
-    return data;
+    return ESP_OK;
 }
 
 
@@ -97,8 +99,17 @@ int me_mhuart_read_concentration(int uart_num, uint8_t cmd)
     int     n;
     u_char  data[MH_UART_BUF_SIZE];
 
-    if( !readwrite(uart_num, cmd, NULL, data) )
+    if( send_req(uart_num, cmd, NULL) )
         return -1;
+
+    if( read_resp(uart_num, data) )
+        return -1;
+
+    if( data[1] != cmd )
+    {
+        ESP_LOGE(TAG, "Command rejected. Send %X recv %X", cmd, data[1]);
+        return ESP_FAIL;
+    }
 
     n = (data[2] << 8) | data[3];
     if( cmd == MH_CMD_READ_LONG )
@@ -108,40 +119,38 @@ int me_mhuart_read_concentration(int uart_num, uint8_t cmd)
 }
 
 
-int me_mhuart_auto_calibration(int uart_num, int is_on)
+esp_err_t me_mhuart_auto_calibration(int uart_num, int is_on)
 {
     uint8_t  val[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 };
 
     if( is_on )
         val[0] = 0xa0;
 
-    return readwrite(uart_num, MH_CMD_CALIBRATE_AUTO, val, NULL) ? -1 : 0;
+    return send_req(uart_num, MH_CMD_CALIBRATE_AUTO, val);
 }
 
-int me_mhuart_calibrate(int uart_num, int ppm)
+
+esp_err_t me_mhuart_calibrate(int uart_num, int ppm)
 {
     uint8_t  val[5] = { 0x00, 0x00, 0x00, 0x00, 0x00 };
-    u_char  *retval;
+    uint8_t  cmd = MH_CMD_CALIBRATE_ZERO;
 
-    me_debug( "MHUART-CALIB", "MH calibration requested for %d ppm", ppm);
+    me_debug( "MHUART", "MH calibration requested for %d ppm", ppm);
 
     if( ppm )
     {
         val[0] = (ppm >> 8) & 0xFF;
         val[1] = ppm & 0xFF;
-        retval = readwrite(uart_num, MH_CMD_CALIBRATE_SPAN, val, NULL);
-    } else
-        retval = readwrite(uart_num, MH_CMD_CALIBRATE_ZERO, NULL, NULL);
+        cmd = MH_CMD_CALIBRATE_SPAN;
+    }
 
-    return retval ? -1 : 0;
+    return send_req(uart_num, cmd, val);
 }
 
-int me_mhuart_set_mode(int uart_num, uint8_t mode)
+
+esp_err_t me_mhuart_set_mode(int uart_num, uint8_t mode)
 {
     uint8_t  val[5] = { mode, 0x00, 0x00, 0x00, 0x00 };
 
-    return readwrite(uart_num, MH_CMD_SET_MODE, val, NULL) ? -1 : 0;
+    return send_req(uart_num, MH_CMD_SET_MODE, val);
 }
-
-
-
