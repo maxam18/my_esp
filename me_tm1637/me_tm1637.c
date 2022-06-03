@@ -17,9 +17,12 @@
 #define TM1637_ADDR_AUTO  0x40
 #define TM1637_ADDR_FIXED 0x44
 
-#define TM1637_SYM_MINUS    0x40 /* 0b1000 0000 - '-' */
-#define TM1637_SYM_MDASH    0x48 /* 0b1000 1000 - '-' */
-#define TM1637_SYM_DASH     0x08 /* 0b0100 1000 - '-' */
+#define TM1637_SYM_START  '-'
+#define TM1637_ZERO_SHIFT ('0' - '-')
+
+#define TM1637_SYM_MINUS  0x40 /* 0b1000 0000 - '-' */
+#define TM1637_SYM_MDASH  0x48 /* 0b1000 1000 - '-' */
+#define TM1637_SYM_DASH   0x08 /* 0b0100 1000 - '-' */
 
 
 #ifdef CONFIG_TM1637_USE_LOCKS
@@ -43,6 +46,10 @@ static SemaphoreHandle_t mutex;
 
 static const int8_t me_tm1637_symbols[] = {
           /*  GFE DCBA */
+
+    0x40, /* X100 0000 - '-' */
+    0x80, /* 1000 0000 - '.' */
+    0x30, /* X011 0000 - '/' */
     0x3f, /* X011 1111 - 0 */
     0x06, /* X000 0110 - 1 */
     0x5b, /* X101 1011 - 2 */
@@ -90,6 +97,7 @@ static const int8_t me_tm1637_symbols[] = {
     0x39, /* X000 0001 - [  */
     0x64, /* X110 0100 - \  */
     0x0F, /* X000 1111 - ]  */
+    0x49, /* X100 1001 - '^'*/
     0x08, /* X000 1000 - '_' */
     0x01, /* X000 0001 - cannot show */
 };
@@ -243,7 +251,7 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
     }
 
     do {
-        ch = me_tm1637_symbols[number % 10];
+        ch = me_tm1637_symbols[number % 10 - TM1637_ZERO_SHIFT];
         buf[*seg++] = ch;
 
         if( dot_pos-- == 0 )
@@ -252,12 +260,12 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
         number /= 10;
     } while( number && *seg != TM1637_SEG_MAX );
 
-    ch = (lead_zero) ? me_tm1637_symbols[0] : 0x00;
+    ch = (lead_zero) ? me_tm1637_symbols['0'-TM1637_SYM_START] : 0x00;
     for(; *seg != TM1637_SEG_MAX; seg++ )
     {
         buf[*seg] = ch;
         if( !dot_pos-- )
-            buf[*seg] = ch | 0x80;
+            buf[*seg] |= 0x80;
     }
 
     if( is_neg )
@@ -286,7 +294,7 @@ void me_tm1637_set_text(me_tm1637_led_t * led, uint8_t *text, int8_t chars)
             if( ch >= 'a' && ch <= 'z' )
                 ch -= ('a' - 'A');
 
-            ch -= '0';
+            ch -= TM1637_SYM_START;
             ch = ch < sizeof(me_tm1637_symbols) ? me_tm1637_symbols[ch] : 0;
         } else
             ch = 0x00;
