@@ -9,6 +9,7 @@
 #define _ME_ADS111X_H
 
 #include <sys/types.h>
+#include <me_i2c.h>
 
 #include "me_ads111x_defs.h"
 

@@ -5,7 +5,6 @@
  * Copyright (c) 2021 ..."
  */
 
-#include "me_i2c.h"
 #include "me_ads111x.h"
 #include "me_debug.h"
 
