@@ -251,16 +251,17 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, bool lead_z
     }
 
     do {
-        ch = me_tm1637_symbols[number % 10 - TM1637_ZERO_SHIFT];
-        buf[*seg++] = ch;
+        ch = me_tm1637_symbols[number % 10 + TM1637_ZERO_SHIFT];
 
         if( dot_pos-- == 0 )
             ch |= 0x80;
 
+        buf[*seg++] = ch;
+
         number /= 10;
     } while( number && *seg != TM1637_SEG_MAX );
 
-    ch = (lead_zero) ? me_tm1637_symbols['0'-TM1637_SYM_START] : 0x00;
+    ch = (lead_zero) ? me_tm1637_symbols[TM1637_ZERO_SHIFT] : 0x00;
     for(; *seg != TM1637_SEG_MAX; seg++ )
     {
         buf[*seg] = ch;

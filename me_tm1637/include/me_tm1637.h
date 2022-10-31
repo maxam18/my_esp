@@ -13,6 +13,8 @@
 #include <stdbool.h>
 #include <driver/gpio.h>
 
+#include <math.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -95,7 +97,7 @@ void me_tm1637_set_number_dot(me_tm1637_led_t * led, int32_t number, const bool 
  * @param digs number of digits after a dot (i.e. dot position)
  * @param lead_zero Display leading zero(s)
  */
-#define me_tm1637_set_float(led, n, digs, lead_zero) me_tm1637_set_number_dot(led, (int)(n * (10 * digs)), lead_zero, digs)
+#define me_tm1637_set_float(led, n, digs, lead_zero) me_tm1637_set_number_dot(led, (int)(n * pow((double)10, digs)), lead_zero, digs)
 
 /**
  * @brief Set text (available chars from ASCII '0' to ASCII 'Z')
