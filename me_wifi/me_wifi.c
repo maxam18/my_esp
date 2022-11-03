@@ -108,14 +108,16 @@ void me_wifi_init_cb(void (*func)(uint8_t))
 
     wifi_comm_event_group = xEventGroupCreate();
 
-    if( func == NULL )
-    {
-        xEventGroupWaitBits(wifi_comm_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
-    } else 
-        got_ip_callback = func;
+    got_ip_callback = func;
 
     start();
     ESP_LOGI(TAG, "Waiting for IP...");
+
+    if( func == NULL )
+    {
+        xEventGroupWaitBits(wifi_comm_event_group, CONNECTED_BITS, true, true, portMAX_DELAY);
+    }
+
 }
 
 void me_wifi_init(void)

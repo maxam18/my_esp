@@ -7,6 +7,10 @@
 
 #ifndef _ME_WIFI_H
 #define _ME_WIFI_H
+
+#include "esp_event.h"
+#include "esp_netif.h"
+
 /**
  * @brief initialized wifi client
  *        storage MUST be initialized before the call wifi_init
