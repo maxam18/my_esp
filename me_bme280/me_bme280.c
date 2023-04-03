@@ -158,7 +158,7 @@ esp_err_t me_bme280_init(me_bme280_conf_t *conf)
     if( err == ESP_OK )
 	{
 		if( res[0] != BME280_CHIP_ID )
-			return ESP_FAIL;
+			return ESP_ERR_INVALID_VERSION;
 	} else
         return err;
 
