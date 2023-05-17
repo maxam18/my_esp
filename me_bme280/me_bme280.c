@@ -10,6 +10,7 @@
 
 /**\name BME280 chip identifier */
 #define BME280_CHIP_ID  			0x60
+#define BMP280_CHIP_ID  			0x58
 
 /**\name Register Address (Table 18) */
 #define BME280_REG_HUM_LSB			0xFE
@@ -39,8 +40,8 @@
 #define	BME280_NORMAL_MODE			0x03
 
 /**\name StandBy time for NORMAL MODE */
-#define BME280_T_SB_10				0xC0
-#define BME280_T_SB_20				0xE0
+#define BME280_T_SB_10				0xC0 /* Note: 1000 ms for BMP280 */
+#define BME280_T_SB_20				0xE0 /* Note: 4000 ms for BMP280 */
 #define BME280_T_SB_125				0x40
 #define BME280_T_SB_250				0x60
 #define BME280_T_SB_500				0x80
@@ -157,7 +158,9 @@ esp_err_t me_bme280_init(me_bme280_conf_t *conf)
     err = me_bme280_info(conf, res);
     if( err == ESP_OK )
 	{
-		if( res[0] != BME280_CHIP_ID )
+		conf->chip_id = res[0];
+		if( conf->chip_id != BME280_CHIP_ID &&
+			conf->chip_id != BMP280_CHIP_ID )
 			return ESP_ERR_INVALID_VERSION;
 	} else
         return err;
@@ -183,8 +186,11 @@ esp_err_t me_bme280_init(me_bme280_conf_t *conf)
 	req[5]  = ME_BME280_FILTER_COEFF | 
 			  BME280_T_SB_500;
 	
-	
-    err = me_i2c_write(conf->port, conf->addr, req, 6);
+	if( conf->chip_id == BME280_CHIP_ID )
+    	err = me_i2c_write(conf->port, conf->addr, req, 6);
+	else
+    	err = me_i2c_write(conf->port, conf->addr, req+2, 4);
+
 	if( err != ESP_OK )
 		return err;
 
@@ -192,8 +198,11 @@ esp_err_t me_bme280_init(me_bme280_conf_t *conf)
     req[0] = BME280_REG_CALIB_00_25;
 	err  = me_i2c_req_resp(conf->port, conf->addr, req, 1
                             , (uint8_t *)&conf->calib, 26);
-    if( err != ESP_OK )
+	if( err != ESP_OK )
         return err;
+
+	if( conf->chip_id == BMP280_CHIP_ID )
+        return ESP_OK;
 
     req[0] = BME280_REG_CALIB_26_41;
 	err  = me_i2c_req_resp(conf->port, conf->addr, req, 1        
@@ -237,7 +246,8 @@ esp_err_t me_bme280_read(me_bme280_conf_t *conf, me_bme280_readings_t *readings)
 
     req[0] = BME280_REG_PRESS_MSB;
 
-	err = me_i2c_req_resp(conf->port, conf->addr, req, 1, res, 8);
+	err = me_i2c_req_resp(conf->port, conf->addr, req, 1, res
+						, conf->chip_id == BME280_CHIP_ID ? 8 : 6 );
 	if( err != ESP_OK )
         return err;
 
@@ -253,7 +263,9 @@ esp_err_t me_bme280_read(me_bme280_conf_t *conf, me_bme280_readings_t *readings)
 
 	readings->temperature = compensate_temperature(&conf->calib, &uncomp);
 	readings->pressure    = compensate_pressure(&conf->calib, &uncomp);
-	readings->humidity    = compensate_humidity(&conf->calib, &uncomp);
+
+	if( conf->chip_id == BME280_CHIP_ID )
+		readings->humidity    = compensate_humidity(&conf->calib, &uncomp);
 
 	return ESP_OK;
 }

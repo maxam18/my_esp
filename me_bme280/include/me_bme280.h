@@ -28,6 +28,7 @@
 #define ME_BME280_FILTER_COEFF_8       	0x03
 #define ME_BME280_FILTER_COEFF_16      	0x04
 
+
 /**
  * @brief oversampling setup
  */
@@ -85,6 +86,7 @@ typedef struct {
     me_bme280_calib_t  calib;    /*!< calibration data */
     i2c_port_t         port;     /*!< I2C bus number */
     uint8_t            addr;     /*!< I2C sensor's slave address */
+	uint8_t			   chip_id;  /*!< BPM280 or BME280 */
 } me_bme280_conf_t;
 
 /**
@@ -93,7 +95,8 @@ typedef struct {
 #define ME_BME280_CONFIG_DEF	{ \
 									{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, \
 									I2C_NUM_0, \
-									ME_BME280_I2C_ADDR_PRIMARY \
+									ME_BME280_I2C_ADDR_PRIMARY, \
+									0 \
 								}
 
 /**
