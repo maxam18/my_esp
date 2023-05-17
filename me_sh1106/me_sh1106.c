@@ -89,10 +89,10 @@ static esp_err_t reset_row(me_sh1106_conf_t *c, uint8_t row)
     return me_i2c_write(c->port, c->addr, req, sizeof(req));
 }
 
-static esp_err_t me_sh1106_8x8_row(me_sh1106_conf_t *c, char *str, int len, int row)
+static esp_err_t me_sh1106_8x8_row(me_sh1106_conf_t *c, char *str, int row)
 {
     esp_err_t   err = ESP_OK;
-    uint8_t     req[1+132], *rp, *end;
+    uint8_t     req[1+132], *rp, *end, ch;
 
     if( c->flip )
         row = (ME_SH1106_MAX_ROWS - row) - 1;
@@ -105,9 +105,16 @@ static esp_err_t me_sh1106_8x8_row(me_sh1106_conf_t *c, char *str, int len, int 
     rp    = req;
     *rp++ = ME_SH1106_REG_DATA_STREAM;
     
-	while( rp < end && len-- )
+	while( rp < end )
     {
-        memcpy(rp, font8x8_basic_tr[(uint8_t)*str++], 8);
+        ch = (uint8_t)*str;
+        if( !ch )
+            ch = ' ';
+        else
+            str++;
+
+        memcpy(rp, font8x8_basic_tr[ch], 8);
+
         rp += 8;
     }
 
@@ -117,6 +124,6 @@ static esp_err_t me_sh1106_8x8_row(me_sh1106_conf_t *c, char *str, int len, int 
 
 esp_err_t me_sh1106_8x8_string(me_sh1106_conf_t *c, char *str, int row)
 {
-    return me_sh1106_8x8_row(c, str, strlen(str), row);
+    return me_sh1106_8x8_row(c, str, row);
 }
 

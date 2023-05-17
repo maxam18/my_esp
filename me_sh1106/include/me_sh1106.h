@@ -33,6 +33,15 @@ typedef struct {
 } me_sh1106_conf_t;
 
 /**
+ * @brief SH1106 default config
+ */
+#define ME_SH1106_CONFIG_DEF  { \
+                                I2C_NUM_0, \
+                                ME_SH1106_I2C_ADDRESS_PRIMARY, \
+                                ME_SH1106_FLIP_NO, \
+                              }
+
+/**
  * @brief SH1106 OLED initialization
  *        me_i2c MUST be initialized before
  *
