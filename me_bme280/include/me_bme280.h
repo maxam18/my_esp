@@ -88,6 +88,15 @@ typedef struct {
 } me_bme280_conf_t;
 
 /**
+ * @brief ME_BME280 default config
+ */
+#define ME_BME280_CONFIG_DEF	{ \
+									{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, \
+									I2C_NUM_0, \
+									ME_BME280_I2C_ADDR_PRIMARY \
+								}
+
+/**
  * @brief BM280 initialization
  *        Does not check CHIP_VERSION.
  *        Resets device. Uploads oversampling info. 
