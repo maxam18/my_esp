@@ -5,15 +5,26 @@
  * Copyright (c) 2022 ..."
  */
 
-#include <me_debug.h>
 #include "me_ncoder.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
 
+#ifdef ME_NCODER_DEBUG
+static const char *DTAG = "NCODER"
+#define dd(...) ESP_LOGI( DTAG, __VA_ARGS__ )
+#else
+#define dd(...)
+#endif
+
+#ifndef CONFIG_ME_NCODER_LONG_PRESS_DELAY_MS
+#define LONG_PRESS_US   3000 * 1000
+#else
+#define LONG_PRESS_US   CONFIG_ME_NCODER_LONG_PRESS_DELAY_MS * 1000
+#endif
+
 #define INTERVAL_US     2000
 #define WAIT_MAX_US     INTERVAL_US * 10
-#define LONG_PRESS_US   500000
 #define PRESS_LEVEL     0
 
 typedef struct {
@@ -32,7 +43,7 @@ typedef struct {
     me_ncoder_state_t   state;
 } me_ncoder_t;
 
-me_ncoder_t                 enc[1];
+me_ncoder_t                 enc[1] = { 0 };
 static QueueHandle_t        queue;
 static SemaphoreHandle_t    mutex;
 
@@ -82,7 +93,9 @@ static void run_encoder()
         ev.state   = enc->wait_us > LONG_PRESS_US ? 
                             ME_NCODER_RELEASED_LONG : ME_NCODER_RELEASED;
         goto send_queue;
-    }
+    } else
+        enc->btn = 0;
+
 
     u8 = 0x0F & ((enc->path << 2) 
         | (gpio_get_level(enc->pinb) << 1ULL) 
@@ -100,8 +113,8 @@ static void run_encoder()
         return;
 
 send_queue:
-    me_debug("NCODER", "Send to queue: %d, ev.btn: %d, enc.btn: %d", ev.state, ev.button, enc->btn);
-    ev.button = enc->btn;
+    dd("NCODER", "Send to queue: %d, ev.btn: %d, enc.btn: %d"
+                     , ev.state, ev.button, enc->btn);
     xQueueSendToBack(queue, &ev, 0);
 }
 
@@ -149,15 +162,18 @@ esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb,
     if( len == 0 )
         return ESP_ERR_INVALID_ARG;
 
-    enc->pins = pins;
-    enc->len  = len;
     enc->pina = pina;
     enc->pinb = pinb;
     enc->path = 0;
     //enc->btn  = 0;
 
+    enc->len  = len;
+    enc->pins = malloc(len);
     while( len-- )
-        io_conf.pin_bit_mask |= 1ULL << *pins++;
+    {
+        enc->pins[len] = pins[len];
+        io_conf.pin_bit_mask |= 1ULL << pins[len];
+    }
 
     io_conf.pin_bit_mask |= (1ULL << pina) | (1ULL << pinb);
 
@@ -169,12 +185,12 @@ esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb,
 
     for( i = 0; i < enc->len; ++i ) 
     {
-        me_debug("NCODER", "Button pin[%d] %d level %d", i, enc->pins[i]
+        dd("NCODER", "Button pin[%d] %d level %d", i, enc->pins[i]
                 , gpio_get_level(enc->pins[i]));
     }
-    me_debug("NCODER", "Button pina %d level %d", pina
+    dd("NCODER", "Button pina %d level %d", pina
             , gpio_get_level(pina));
-    me_debug("NCODER", "Button pinb %d level %d", pinb
+    dd("NCODER", "Button pinb %d level %d", pinb
             , gpio_get_level(pinb));
 #endif
 
