@@ -32,4 +32,87 @@ menu "My ESP configurations"
     config ME_NVS_STORE_NAME
         string "NVS store name"
         default "my_esp"
+
+    menu "Digit display encoder interface"
+
+        config ME_DIFACE_DEBUG
+            bool "Enable debug"
+            default n
+
+        config ME_DIFACE_REFRESH_DELAY
+            int "Value refresh delay (ms)"
+            default 1000
+            help
+                My ESP digits display interface delay.
+
+        config ME_DIFACE_SET_DELAY
+            int "Interface set delay (ms)"
+            default 8000
+            help
+                My ESP digits display interface value set delay.
+
+        config ME_DIFACE_DISP_BRIGHTNESS
+            int "Display brightness"
+            default 2
+            range 1 5
+
+        config ME_DIFACE_PIN_DISP_ONE_CLK
+            int "Main display CLK pin"
+            default 33
+            help
+                My ESP digits display interface pin CLK.
+
+        config ME_DIFACE_PIN_DISP_ONE_DTA
+            int "Main display DTA pin"
+            default 32
+            help
+                My ESP digits display interface pin CLK.
+
+        config ME_DIFACE_DISP_ONE_6SEGS
+            bool "Main display has 6 segments"
+            default n
+            help
+                Configure 6 segments display
+
+        config ME_DIFACE_HAS_SECOND_DISPLAY
+            bool "Second display"
+            default n
+            help
+                Enable second interface for My ESP digits display interface
+
+        if ME_DIFACE_HAS_SECOND_DISPLAY
+            config ME_DIFACE_PIN_DISP_TWO_CLK
+                int "Second display CLK pin"
+                default 33
+                help
+                    My ESP digits display interface pin CLK.
+
+            config ME_DIFACE_PIN_DISP_TWO_DTA
+                int "Second display DTA pin"
+                default 32
+                help
+                    My ESP digits display interface pin CLK.
+
+            config ME_DIFACE_DISP_TWO_6SEGS
+                bool "Second display has 6 segments"
+                default n
+                help
+                    Configure 6 segments display
+        endif
+    endmenu
+
+    menu "Encoder pins"
+        config ME_NCODER_DEBUG
+            bool "Enable debug messages"
+            default n
+        config ME_NCODER_PIN_BTN
+            int "Rotary encoder SW pin number"
+            default 36
+        config ME_NCODER_PIN_A
+            int "Rotary encoder A pin number"
+            default 35
+        config ME_NCODER_PIN_B
+            int "Rotary encoder B pin number"
+            default 34
+    endmenu
 endmenu
