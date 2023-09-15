@@ -5,6 +5,8 @@
  * Copyright (c) 2021 ..."
  */
 #include <stdint.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 
 #ifndef _ME_TIME_H
 #define _ME_TIME_H
