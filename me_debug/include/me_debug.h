@@ -13,8 +13,10 @@
 
 #if CONFIG_ME_DEBUG
 #define me_debug(T, ...) ESP_LOGI( "ME_DBG-" T, __VA_ARGS__ )
+#define me_debug_assert(E) do { if( !(E) ) abort(); } while(0)
 #else
 #define me_debug(...)
+#define me_debug_assert(...)
 #endif
 
 #endif
