@@ -66,7 +66,7 @@ static void read_calibration(me_asensor_t *sensor)
     nvs_close(store);
 }
 
-static void write_calibration(me_asensor_t *sensor)
+static esp_err_t write_calibration(me_asensor_t *sensor)
 {
     nvs_handle  store;
     esp_err_t   err;
@@ -78,14 +78,14 @@ static void write_calibration(me_asensor_t *sensor)
         ESP_LOGE(TAG, "Error (%s) opening NVS handle for sensor %s!"
                     , esp_err_to_name(err)
                     , sensor->name);
-        return;
+        return err;
     }
 
     err = nvs_set_blob(store, sensor->name, sensor->points, store_sz);
     if (err ==  ESP_OK ) {
         ESP_LOGI(TAG, "Calibration data of %s written to the storage"
                     , sensor->name);
-        nvs_commit(store);
+        err = nvs_commit(store);
     }
     else
         ESP_LOGE(TAG, "Error writting %s calibration to storage (%s)!"
@@ -93,6 +93,8 @@ static void write_calibration(me_asensor_t *sensor)
                     , esp_err_to_name(err));
 
     nvs_close(store);
+
+    return err;
 }
 
 void me_asensor_clear(me_asensor_t *sensor)
@@ -149,7 +151,7 @@ esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
             break;
 
     if( len == 0 )
-        return ESP_FAIL;
+        lp = sensor->points + sensor->length - 2;
 
     if( span->y == lp->y )
     {
@@ -187,9 +189,7 @@ esp_err_t me_asensor_add(me_asensor_t *sensor, me_asensor_span_t *span)
     sensor->points->k = rp->k;
     sensor->points->c = rp->c;
 
-    write_calibration(sensor);
-
-    return ESP_OK;
+    return write_calibration(sensor);
 }
 
 me_asensor_t *me_asensor_init(const char *name, uint8_t length, me_asensor_t *sb)
@@ -252,9 +252,9 @@ void me_asensor_dump(me_asensor_t *sensor)
     while( i-- )
     {
         n  = snprintf(p, l, "{ x: %d, y: %4.2f, k: %4.4f, c: %4.4f"
-                              " h: %3.1f, t: %2.2f, ts: %d }, "
+                              " h: %3.1f, t: %2.2f, ts: %ld }, "
                             , s->x, s->y, s->k, s->c
-                            , s->humidity, s->temperature, s->ts );
+                            , s->humidity, s->temperature, (long int)s->ts );
         p += n;
         l -= n;
         s++;

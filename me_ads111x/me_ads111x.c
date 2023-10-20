@@ -8,6 +8,11 @@
 #include "me_ads111x.h"
 #include "me_debug.h"
 
+#ifdef CONFIG_ME_DEBUG_ADS
+#define me_debug_ads(...) me_debug( __VA_ARGS__ )
+#else
+#define me_debug_ads(...)
+#endif
 
 static double _FSR[] = { 6144, 4096, 2048, 1024, 512, 256, 256, 256 };
 
@@ -54,7 +59,7 @@ esp_err_t me_ads111x_get_raw(me_ads111x_conf_t *c, int16_t *raw)
 
     if( c->set != c->cur )
     {
-        me_debug( "ads", "Conf req 0x%04X, last 0x%04X", c->set, c->cur);
+        me_debug_ads( "ads", "Conf req 0x%04X, last 0x%04X", c->set, c->cur);
 
         req[0] = ME_ADS111x_REG_CONF;
         req[1] = c->set >> 8;

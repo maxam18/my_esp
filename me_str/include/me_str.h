@@ -11,7 +11,8 @@
 #ifndef _ME_STR_H
 #define _ME_STR_H
 
-#define me_str(X)  { (u_char *)(X), sizeof(X) - 1 }
+#define me_str(X)       { (u_char *)(X), sizeof(X) - 1 }
+#define me_str_null     { NULL, 0 }
 
 /**
  * @brief String holder structure
