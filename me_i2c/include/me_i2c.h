@@ -185,5 +185,22 @@ esp_err_t me_i2c_read(i2c_port_t port, uint8_t addr, void *data, uint8_t size);
  */
 esp_err_t me_i2c_req_resp(i2c_port_t port, uint8_t addr, uint8_t *req, uint8_t req_size, void *resp, uint8_t resp_size);
 
+/**
+ * @brief I2C write to register
+  * 
+ * @param port I2C port number
+ * @param addr I2C slave address
+ * @param reg register to write to
+ * @param val value to write to the register
+ * 
+ * @return
+ *     - ESP_OK Success
+ *     - ESP_ERR_INVALID_ARG Parameter error
+ *     - ESP_FAIL Sending command error, slave doesn't ACK the transfer.
+ *     - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
+ *     - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.    
+ */
+esp_err_t me_i2c_write_reg(i2c_port_t port, uint8_t addr, uint8_t reg, uint8_t val);
+
 #endif
 

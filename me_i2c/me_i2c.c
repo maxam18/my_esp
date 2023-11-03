@@ -76,6 +76,7 @@ esp_err_t me_i2c_reset_timeout(i2c_port_t port, int us)
     return i2c_set_timeout(port, timeout);
 }
 
+
 esp_err_t me_i2c_write(i2c_port_t port, uint8_t addr, uint8_t *data, uint8_t size)
 {
     int                 timeout;
@@ -97,6 +98,7 @@ esp_err_t me_i2c_write(i2c_port_t port, uint8_t addr, uint8_t *data, uint8_t siz
 
     return err;
 }
+
 
 esp_err_t me_i2c_read(i2c_port_t port, uint8_t addr, void *data, uint8_t size)
 {
@@ -122,6 +124,7 @@ esp_err_t me_i2c_read(i2c_port_t port, uint8_t addr, void *data, uint8_t size)
     return err;
 }
 
+
 esp_err_t me_i2c_req_resp(i2c_port_t port, uint8_t addr, uint8_t *req, uint8_t req_size, void *resp, uint8_t resp_size)
 {
     int                 timeout;
@@ -145,6 +148,15 @@ esp_err_t me_i2c_req_resp(i2c_port_t port, uint8_t addr, uint8_t *req, uint8_t r
     
     return err;
 }
+
+
+esp_err_t me_i2c_write_reg(i2c_port_t port, uint8_t addr, uint8_t reg, uint8_t val)
+{
+    uint8_t     req[2] = {reg, val};
+
+    return me_i2c_write(port, addr, req, 2);
+}
+
 
 esp_err_t me_i2c_bus_reset(i2c_port_t port)
 {
