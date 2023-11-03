@@ -164,7 +164,6 @@ esp_err_t dev_write(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd)
 
 esp_err_t me_gd_dev_draw(me_gd_dev_t *dev, uint8_t *data, size_t len)
 {
-    static int      rep = 0;
     esp_err_t       err;
     me_gd_dev_cmd_t cmd = { dev->cmd_set->update.cmd, { data, len }};
 
@@ -227,6 +226,12 @@ esp_err_t me_gd_dev_init(me_gd_dev_t *dev, me_gd_dev_conf_t *cf)
     err = gpio_config(&io_out_conf);
     if( err != ESP_OK )
         goto init_err;
+
+    spi_cfg.max_transfer_sz = 4 + (me_gd_models[cf->model].height
+                                    * me_gd_models[cf->model].width
+                                    * me_gd_models[cf->model].bpp) / 8;
+    if( spi_cfg.max_transfer_sz < 4096 )
+        spi_cfg.max_transfer_sz = 0;
 
     err = spi_bus_initialize(HSPI_HOST, &spi_cfg, 1);
     if( err != ESP_OK )
