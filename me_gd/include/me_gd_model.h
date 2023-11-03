@@ -13,7 +13,8 @@
 typedef enum {
     ME_GD_MODEL_0213F51,
     ME_GD_MODEL_029F51,
-    ME_GD_MODEL_0213B74
+    ME_GD_MODEL_0213B74,
+    ME_GD_MODEL_029T94
 } me_gd_model_enum_t;
 
 typedef struct {

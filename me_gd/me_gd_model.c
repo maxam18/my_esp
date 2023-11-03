@@ -26,6 +26,12 @@ me_gd_model_t me_gd_models[] = {
         .busy_level = 1,
         .width      = 250,
         .height     = 128
+    },
+    {// 029T94
+        .bpp        = 1,
+        .busy_level = 1,
+        .width      = 296,
+        .height     = 128
     }
 };
 
@@ -80,6 +86,19 @@ static me_gd_dev_cmd_t gdey0213B74_init[] = {
     { 0x22, me_str("\xf7")}, // update control sequence
     me_gd_dev_cmd_null
 };
+static me_gd_dev_cmd_t gdey029T94_init[] = {
+    { 0x01, me_str("\x27\x01\x00")}, // (height-1)%256,height-1)/256,00
+    { 0x11, me_str("\x01")},
+    { 0x44, me_str("\x00\x0F")}, // 00,width/8-1
+    { 0x45, me_str("\x27\x01\x00\x00")}, // (height-1)%256,height-1)/256,00,00
+    { 0x3C, me_str("\x05")},
+    { 0x21, me_str("\x00\x80")}, // inverse, available source
+    { 0x18, me_str("\x80")},
+    { 0x4E, me_str("\x00")},
+    { 0x4F, me_str("\x27\x01")}, // (height-1)%256,height-1)/256
+    { 0x22, me_str("\xf7")}, // update control sequence
+    me_gd_dev_cmd_null
+};
 
 me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {
         { // 0213F51
@@ -106,4 +125,12 @@ me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {
             .update   = { 0x24, me_str_null },
             .init     = gdey0213B74_init
         },
+        { // 029T94
+            .poweroff = me_gd_dev_cmd_null,
+            .refresh  = { 0x20, me_str_null },
+            .reset    = { 0x12, me_str_null },
+            .sleep    = { 0x10, me_str("\x01")},
+            .update   = { 0x24, me_str_null },
+            .init     = gdey029T94_init
+        }
 };
