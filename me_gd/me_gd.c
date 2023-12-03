@@ -21,22 +21,22 @@ static void cl_hline(me_gd_t *gd, int x, int y, int w, uint8_t color);
 static const char *TAG = "GD";
 
 
-void me_gd_text(me_gd_t *gd, int x, int y, me_gd_font_t *font, char *txt, uint8_t len)
+void me_gd_text(me_gd_t *gd, int x, int y, me_gd_font_t *font, char *txt, uint8_t len)/*{{{*/
 {
     if( gd->bpp == 1 )
         bw_text(gd, x, y, font, txt, len);
     else
         cl_text(gd, x, y, font, txt, len);
-}
+}/*}}}*/
 
 
-static void cl_text(me_gd_t *gd, int x, int y, me_gd_font_t *font, char *txt, uint8_t len)
+static void cl_text(me_gd_t *gd, int x, int y, me_gd_font_t *font, char *txt, uint8_t len)/*{{{*/
 {
     gd->bitmap[0] = 0xff;
-}
+}/*}}}*/
 
 
-static void bw_text(me_gd_t *gd, int x, int y, me_gd_font_t *fonts, char *txt, uint8_t len)
+static void bw_text(me_gd_t *gd, int x, int y, me_gd_font_t *fonts, char *txt, uint8_t len)/*{{{*/
 {
     uint8_t          v, h, *dp, *sp;
     me_gd_font_t    *font = fonts;
@@ -80,24 +80,26 @@ static void bw_text(me_gd_t *gd, int x, int y, me_gd_font_t *fonts, char *txt, u
             dp  += gd->hbytes - font->hbytes;
         }
     }
-}
+}/*}}}*/
 
 
-void me_gd_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)
+void me_gd_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)/*{{{*/
 {
     if( gd->bpp == 1 )
         bw_vline(gd, x, y, h, color);
     else
         cl_vline(gd, x, y, h, color);
 }
+/*}}}*/
 
 
-static void cl_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)
+static void cl_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)/*{{{*/
 {
     return;
-}
+}/*}}}*/
 
-static void bw_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)
+
+static void bw_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)/*{{{*/
 {
     uint8_t     c, *p = gd->bitmap + x*gd->hbytes + y/8;
 
@@ -132,25 +134,25 @@ static void bw_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)
     {
         *p++ = c;
     }
-}
+}/*}}}*/
 
 
-void me_gd_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)
+void me_gd_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)/*{{{*/
 {
     if( gd->bpp == 1 )
         bw_hline(gd, x, y, w, color);
     else
         cl_hline(gd, x, y, w, color);
-}
+}/*}}}*/
 
 
-static void cl_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)
+static void cl_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)/*{{{*/
 {
     return;
-}
+}/*}}}*/
 
 
-static void bw_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)
+static void bw_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)/*{{{*/
 {
     uint8_t    c, m, *p = (gd->bitmap + x*gd->hbytes + y/8);
 
@@ -166,10 +168,10 @@ static void bw_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)
         *p = (*p & m) | c;
         p += gd->hbytes;
     }
-}
+}/*}}}*/
 
 
-void me_gd_square(me_gd_t *gd, int x, int y, int width, int height, uint8_t color)
+void me_gd_square(me_gd_t *gd, int x, int y, int width, int height, uint8_t color)/*{{{*/
 {
     if( gd->bpp == 1 )
     {
@@ -184,10 +186,10 @@ void me_gd_square(me_gd_t *gd, int x, int y, int width, int height, uint8_t colo
         cl_vline(gd, x, y, height, color);
         cl_vline(gd, x+width-1, y, height, color);
     }
-}
+}/*}}}*/
 
 
-void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)
+void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)/*{{{*/
 {
     uint8_t     *dp, h, c;
 
@@ -203,10 +205,10 @@ void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)
             *dp++ = ~(c);
         }
     }
-}
+}/*}}}*/
 
 
-void me_gd_num(me_gd_t *gd, int x, int y, me_gd_font_t *font, int num)
+void me_gd_num(me_gd_t *gd, int x, int y, me_gd_font_t *font, int num)/*{{{*/
 {
     char        buf[32], *p;
     uint8_t     is_neg, n=0;
@@ -232,9 +234,10 @@ void me_gd_num(me_gd_t *gd, int x, int y, me_gd_font_t *font, int num)
         p++;
     
     me_gd_text(gd, x, y, font, p, n);
-}
+}/*}}}*/
 
-void me_gd_image(me_gd_t *gd, int x, int y, int width, uint8_t hbytes, uint8_t *sp)
+
+void me_gd_image(me_gd_t *gd, int x, int y, int width, uint8_t hbytes, uint8_t *sp)/*{{{*/
 {
     uint8_t  h, *dp;
 
@@ -256,16 +259,16 @@ me_debug("GD", "Draw image at x: %d, y: %d, w: %d, h: %d"
             *dp++ = *sp++;
         }
     }
-}
+}/*}}}*/
 
 
-esp_err_t me_gd_update(me_gd_t *gd)
+esp_err_t me_gd_update(me_gd_t *gd)/*{{{*/
 {
     return me_gd_dev_draw(&gd->dev, gd->bitmap, gd->hbytes*gd->width);
-}
+}/*}}}*/
 
 
-me_gd_t *me_gd_init(me_gd_dev_conf_t *cf)
+me_gd_t *me_gd_init(me_gd_dev_conf_t *cf)/*{{{*/
 {
     esp_err_t      err;
     me_gd_t       *gd;
@@ -311,6 +314,5 @@ me_gd_t *me_gd_init(me_gd_dev_conf_t *cf)
     while( n-- )
         *p++ = me_gd_bw_white;
 
-
     return gd;
-}
+}/*}}}*/

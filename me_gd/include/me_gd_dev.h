@@ -58,6 +58,7 @@ extern me_gd_dev_cmd_set_t  me_gd_models_cmd_set[];
 
 esp_err_t me_gd_dev_draw(me_gd_dev_t *dev, uint8_t *data, size_t len);
 esp_err_t me_gd_dev_init(me_gd_dev_t *dev, me_gd_dev_conf_t *cf);
+esp_err_t me_gd_dev_part(me_gd_dev_t *dev, int x_start, int y_start, int width, int height, uint8_t *data);
 
 #endif
 

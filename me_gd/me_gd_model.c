@@ -35,7 +35,7 @@ me_gd_model_t me_gd_models[] = {
     }
 };
 
-static me_gd_dev_cmd_t gdey0213F51_init[] = {
+static me_gd_dev_cmd_t gdey0213F51_init[] = {/*{{{*/
     { 0x4D, me_str("\x78")},
     { 0x00, me_str("\x0F\x29")}, // PSR resolution
     { 0x01, me_str("\x07\x00")}, // PWRR
@@ -53,8 +53,8 @@ static me_gd_dev_cmd_t gdey0213F51_init[] = {
     { 0x30, me_str("\x08")}, // PLL control: enabled 12kHz
     { 0x04, me_str_null}, // BUSY_N control
     me_gd_dev_cmd_null
-};
-static me_gd_dev_cmd_t gdey029F51_init[] = {
+};/*}}}*/
+static me_gd_dev_cmd_t gdey029F51_init[] = {/*{{{*/
     { 0x4D, me_str("\x78")},
     { 0x00, me_str("\x8F\x29")}, // PSR resolution
     { 0x01, me_str("\x07\x00")}, // PWRR
@@ -72,8 +72,8 @@ static me_gd_dev_cmd_t gdey029F51_init[] = {
     { 0x30, me_str("\x08")}, // PLL control: enabled 12kHz
     { 0x04, me_str_null}, // BUSY_N control
     me_gd_dev_cmd_null
-};
-static me_gd_dev_cmd_t gdey0213B74_init[] = {
+};/*}}}*/
+static me_gd_dev_cmd_t gdey0213B74_init[] = {/*{{{*/
     { 0x01, me_str("\xF9\x00\x00")}, // (height-1)%256,height-1)/256,00
     { 0x11, me_str("\x01")},
     { 0x44, me_str("\x00\x0F")}, // 00,width/8-1
@@ -85,8 +85,8 @@ static me_gd_dev_cmd_t gdey0213B74_init[] = {
     { 0x4F, me_str("\xF9\x00")}, // (height-1)%256,height-1)/256
     { 0x22, me_str("\xf7")}, // update control sequence
     me_gd_dev_cmd_null
-};
-static me_gd_dev_cmd_t gdey029T94_init[] = {
+};/*}}}*/
+static me_gd_dev_cmd_t gdey029T94_init[] = {/*{{{*/
     { 0x01, me_str("\x27\x01\x00")}, // (height-1)%256,height-1)/256,00
     { 0x11, me_str("\x01")},
     { 0x44, me_str("\x00\x0F")}, // 00,width/8-1
@@ -98,9 +98,9 @@ static me_gd_dev_cmd_t gdey029T94_init[] = {
     { 0x4F, me_str("\x27\x01")}, // (height-1)%256,height-1)/256
     { 0x22, me_str("\xf7")}, // update control sequence
     me_gd_dev_cmd_null
-};
+};/*}}}*/
 
-me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {
+me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {/*{{{*/
         { // 0213F51
             .poweroff = { 0X02, me_str_null },
             .refresh  = { 0x12, me_str("\x00") },
@@ -133,4 +133,4 @@ me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {
             .update   = { 0x24, me_str_null },
             .init     = gdey029T94_init
         }
-};
+};/*}}}*/
