@@ -71,7 +71,7 @@ static esp_err_t read_resp(int uart_num, uint8_t *data)
 {
     int    n;
 
-    n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, 60/portTICK_RATE_MS);
+    n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, pdMS_TO_TICKS(60));
 
     me_debug( "MHUART", "Recv: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
             , (u_int)data[0], (u_int)data[1], (u_int)data[2], (u_int)data[3]

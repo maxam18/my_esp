@@ -128,7 +128,7 @@ void state_debug()
                        "nshift: %d, vshift: %d, "
                        "idle_item: %.*s [% 4.4f] "
                          , state_str[ifstate.state]
-                         , ifstate.delay
+                         , (int)ifstate.delay
                          , ifstate.item->name->len, ifstate.item->name->data
                          , ifstate.item->value
                          , ifstate.item->nshift, ifstate.item->vshift
@@ -284,7 +284,7 @@ void do_pos(int change)
 
             last_ticks = ticks;
 
-            me_debug("DIFACE", "diff: %d, add: %4.2f", diff, add);
+            me_debug("DIFACE", "diff: %d, add: %4.2f", (int)diff, add);
             ifstate.item->value += add * change;
             if( ifstate.item->value > range->max )
                 ifstate.item->value = range->min;

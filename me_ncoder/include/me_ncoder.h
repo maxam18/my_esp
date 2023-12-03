@@ -24,6 +24,6 @@ typedef struct {
     uint8_t             button;
 } me_ncoder_event_t;
 
-esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb, xQueueHandle *queue);
+esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb, QueueHandle_t *queue);
 
 #endif

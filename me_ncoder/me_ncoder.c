@@ -9,6 +9,8 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/semphr.h>
+#include <esp_timer.h>
+#include <esp_sleep.h>
 
 #ifdef ME_NCODER_DEBUG
 static const char *DTAG = "NCODER"
@@ -128,7 +130,7 @@ static void call_encoder()
     xSemaphoreGive(mutex);
 }
 
-esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb, xQueueHandle *qptr)
+esp_err_t me_ncoder_init(uint8_t *pins, uint8_t len, uint8_t pina, uint8_t pinb, QueueHandle_t *qptr)
 {
     gpio_config_t   io_conf = {
         .mode       = GPIO_MODE_INPUT,

@@ -1,2 +1,3 @@
 idf_component_register(SRCS "me_hx71x.c"
-                    INCLUDE_DIRS "include")
+                    INCLUDE_DIRS "include"
+                    REQUIRES driver)

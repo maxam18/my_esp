@@ -5,8 +5,7 @@
  * Copyright (c) 2021 ..."
  */
 
-#include <me_wifi_ap.h>
-
+#include <esp_mac.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -18,6 +17,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include <me_wifi_ap.h>
 /* The examples use WiFi configuration that you can set via project configuration menu.
 
    If you'd rather not, just change the below entries to strings with
