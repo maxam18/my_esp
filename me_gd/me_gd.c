@@ -189,6 +189,20 @@ void me_gd_square(me_gd_t *gd, int x, int y, int width, int height, uint8_t colo
 }/*}}}*/
 
 
+void me_gd_box(me_gd_t *gd, int x, int y, int width, int height, uint8_t color)/*{{{*/
+{
+    if( gd->bpp == 1 )
+    {
+        while( width-- )
+            bw_vline(gd, x++, y, height, color);
+    } else 
+    {
+        while( width-- )
+           cl_vline(gd, x++, y, height, color);
+    }
+}/*}}}*/
+
+
 void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)/*{{{*/
 {
     uint8_t     *dp, h, c;
