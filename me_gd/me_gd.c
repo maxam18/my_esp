@@ -49,7 +49,7 @@ static void bw_text(me_gd_t *gd, int x, int y, me_gd_font_t *fonts, char *txt, u
     if( y > (gd->hbytes - font->hbytes) )
         y = gd->hbytes - font->hbytes;
 
-    ESP_LOGI("GD", "PRINT_STR. x: %d, y: %d, str(%d): '%.*s'", x, y, len, len, txt);
+    me_debug("GD", "PRINT_STR. x: %d, y: %d, str(%d): '%.*s'", x, y, len, len, txt);
     dp = (gd->bitmap + x*(int)gd->hbytes + y);
     while( len-- )
     {
@@ -207,6 +207,8 @@ void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)/*{{{*/
 {
     uint8_t     *dp, h, c;
 
+    me_debug("GD", "Invert x: %d, y: %d, w: %d, h: %d", x, y, width, height);
+
     y      /= 8;
     height /= 8;
     while( width-- )
@@ -276,9 +278,15 @@ me_debug("GD", "Draw image at x: %d, y: %d, w: %d, h: %d"
 }/*}}}*/
 
 
-esp_err_t me_gd_update(me_gd_t *gd)/*{{{*/
+inline esp_err_t me_gd_update(me_gd_t *gd)/*{{{*/
 {
     return me_gd_dev_draw(&gd->dev, gd->bitmap, gd->hbytes*gd->width);
+}/*}}}*/
+
+
+inline esp_err_t me_gd_update_fast(me_gd_t *gd)/*{{{*/
+{
+    return me_gd_dev_draw_fast(&gd->dev, gd->bitmap, gd->hbytes*gd->width);
 }/*}}}*/
 
 

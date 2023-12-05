@@ -57,10 +57,59 @@ void debug_cmd(me_gd_dev_cmd_t *cmd)
 
 static esp_err_t dev_send(spi_device_handle_t spi_dev, uint8_t *data, size_t len);
 static esp_err_t dev_wait_busy(me_gd_dev_t *dev);
-static esp_err_t dev_wakeup(me_gd_dev_t *dev);
+static esp_err_t dev_wakeup(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd);
 static esp_err_t dev_sleep(me_gd_dev_t *dev);
+static esp_err_t dev_draw(me_gd_dev_t *dev, uint8_t *data, size_t len, char is_fast);
 static esp_err_t dev_reset(me_gd_dev_t *dev);
 static esp_err_t dev_write(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd);
+
+#if CONFIG_DEV_CLEAR /* {{{ */
+static esp_err_t set_mem(me_gd_dev_t *dev, int bitmap_len)
+{
+    esp_err_t       err;
+    me_gd_dev_cmd_t init_ram = me_gd_dev_cmd_null;
+
+    init_ram.data.len =  bitmap_len;
+    init_ram.data.data = malloc(init_ram.data.len);
+    memset(init_ram.data.data, 0xFF, init_ram.data.len);
+
+    init_ram.cmd = 0x24;
+    err = dev_write(dev, &init_ram);
+    if( err == ESP_OK )
+    {
+        init_ram.cmd = 0x26;
+        err = dev_write(dev, &init_ram);
+    }
+
+    free(init_ram.data.data);
+
+    return err;
+}
+
+
+static esp_err_t dev_clear(me_gd_dev_t *dev, int bitmap_len)
+{
+    esp_err_t       err;
+
+    err = dev_wakeup(dev, dev->cmd_set->init);
+    if( err == ESP_OK )
+        return err;
+    
+    err = set_mem(dev, bitmap_len);
+    if( err == ESP_OK )
+        return err;
+
+    err = dev_write(dev, &dev->cmd_set->refresh);
+    if( err != ESP_OK )
+        return err;
+    
+    err = dev_sleep(dev);
+
+    return err;
+}
+#else
+#define dev_clear(A,B)  err
+#endif /* }}} */
 
 
 static esp_err_t dev_send(spi_device_handle_t spi_dev, uint8_t *data, size_t len)/*{{{*/
@@ -89,24 +138,26 @@ static esp_err_t dev_wait_busy(me_gd_dev_t *dev)/*{{{*/
 }/*}}}*/
 
 
-static esp_err_t dev_wakeup(me_gd_dev_t *dev)/*{{{*/
+static esp_err_t dev_wakeup(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd)/*{{{*/
 {
-    esp_err_t           err = ESP_OK;
-    me_gd_dev_cmd_t    *cmd;
+    esp_err_t   err;
 
     err = dev_reset(dev);
     if( err != ESP_OK )
-        goto init_ret;
+        return err;
 
-    cmd = dev->cmd_set->init;
-    while( cmd->data.data || cmd->cmd )
+    while( cmd->cmd )
     {
-        if( (err = dev_write(dev, cmd)) != ESP_OK )
+        err = dev_write(dev, cmd);
+
+        if( cmd->data.len == 0 && err == ESP_OK )
+            err = dev_wait_busy(dev);
+
+        if( err != ESP_OK )
             break;
         cmd++;
     }
 
-init_ret:
     return err;
 }/*}}}*/
 
@@ -128,7 +179,34 @@ static esp_err_t dev_sleep(me_gd_dev_t *dev)/*{{{*/
 }/*}}}*/
 
 
-esp_err_t dev_reset(me_gd_dev_t *dev)/*{{{*/
+static esp_err_t dev_draw(me_gd_dev_t *dev, uint8_t *data, size_t len, char is_fast) /* {{{ */
+{
+    esp_err_t           err;
+    me_gd_dev_cmd_t     cmd = { dev->cmd_set->update.cmd, { data, len }};
+    me_gd_dev_cmd_t    *init = is_fast ? dev->cmd_set->init_fast : dev->cmd_set->init;
+
+    if( init )
+    {
+        err = dev_wakeup(dev, init);
+        if( err != ESP_OK )
+            return err;
+    }
+
+    err = dev_write(dev, &cmd);
+    if( err != ESP_OK )
+        return err;
+
+    err = dev_write(dev, &dev->cmd_set->refresh);
+    if( err != ESP_OK )
+        return err;
+
+    err = dev_sleep(dev);
+
+    return err;
+} /* }}} */
+
+
+static esp_err_t dev_reset(me_gd_dev_t *dev)/*{{{*/
 {
     vTaskDelay(pdMS_TO_TICKS(20));//At least 20ms delay
     gpio_set_level(dev->pin_reset, 0); // Module reset
@@ -146,7 +224,7 @@ esp_err_t dev_reset(me_gd_dev_t *dev)/*{{{*/
 }/*}}}*/
 
 
-esp_err_t dev_write(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd)/*{{{*/
+static esp_err_t dev_write(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd)/*{{{*/
 {
     esp_err_t   err;
 
@@ -166,145 +244,14 @@ esp_err_t dev_write(me_gd_dev_t *dev, me_gd_dev_cmd_t *cmd)/*{{{*/
 
 esp_err_t me_gd_dev_draw(me_gd_dev_t *dev, uint8_t *data, size_t len)/*{{{*/
 {
-    esp_err_t       err;
-    me_gd_dev_cmd_t cmd = { dev->cmd_set->update.cmd, { data, len }};
-
-    err = dev_wakeup(dev);
-    if( err != ESP_OK )
-        return err;
-
-    err = dev_write(dev, &cmd);
-    if( err != ESP_OK )
-        return err;
-
-    err = dev_write(dev, &dev->cmd_set->refresh);
-    if( err != ESP_OK )
-        return err;
-
-    err = dev_sleep(dev);
-
-    return err;
+    return dev_draw(dev, data, len, 0);
 }/*}}}*/
 
-#if 0 /* {{{ */
-static esp_err_t set_mem(me_gd_dev_t *dev, int bitmap_len)
+
+esp_err_t me_gd_dev_draw_fast(me_gd_dev_t *dev, uint8_t *data, size_t len)/*{{{*/
 {
-    esp_err_t       err;
-    me_gd_dev_cmd_t init_ram = me_gd_dev_cmd_null;
-
-    init_ram.data.len =  bitmap_len;
-    init_ram.data.data = malloc(init_ram.data.len);
-    memset(init_ram.data.data, 0xFF, init_ram.data.len);
-
-    init_ram.cmd = 0x24;
-    err = dev_write(dev, &init_ram);
-    if( err == ESP_OK )
-    {
-        init_ram.cmd = 0x26;
-        err = dev_write(dev, &init_ram);
-    }
-
-    free(init_ram.data.data);
-
-    return err;
-}
-
-
-esp_err_t me_gd_dev_clear(me_gd_dev_t *dev, int bitmap_len)
-{
-    esp_err_t       err;
-
-    err = dev_wakeup(dev);
-    if( err == ESP_OK )
-    {
-        err = set_mem(dev, 296*128/8);
-        if( err == ESP_OK )
-            err = dev_sleep(dev);
-    }
-
-    return err;
-}
-#endif /* }}} */
-
-
-esp_err_t me_gd_dev_part(me_gd_dev_t *dev, int x_start, int y_start, int width, int height, uint8_t *data)/*{{{*/
-{
-    esp_err_t       err;
-    int             x_end, y_end;
-    me_gd_dev_cmd_t data_cmd    = { 0x24, { .data = data, .len = width * (height / 8) }};
-    me_gd_dev_cmd_t refresh_cmds[] = { 
-        { 0x22, me_str("\xFF") },
-        { 0x20, me_str_null },
-        me_gd_dev_cmd_null
-    };
-    me_gd_dev_cmd_t part_cmds[] = {
-        { 0x3C, me_str("\x80") },
-        { 0x44, me_str_null }, // x_start, x_end
-        { 0x45, me_str_null }, // y_start H, y_start L, y_end H, y_end L
-        { 0x4E, me_str_null }, // RAM x addr
-        { 0x4F, me_str_null }, // RAM y start H, L
-        me_gd_dev_cmd_null
-    };
-    me_gd_dev_cmd_t    *cmd;
-    uint8_t             buf[16], *p;
-
-    x_start /= 8;
-    x_end    = x_start + height/8 - 1;
-    y_end    = y_start + width - 1;
-
-    p = buf;
-    part_cmds[1].data.data = p;
-    part_cmds[1].data.len  = 2;
-    *p++ = x_start;
-    *p++ = x_end;
-
-    part_cmds[2].data.data = p;
-    part_cmds[2].data.len  = 4;
-    *p++ = y_start%256;
-    *p++ = y_start/256;
-    *p++ = y_end%256;
-    *p++ = y_end/256;
-    
-    part_cmds[3].data.data = p;
-    part_cmds[3].data.len  = 1;
-    *p++ = x_start;
-    
-    part_cmds[4].data.data = p;
-    part_cmds[4].data.len  = 2;
-    *p++ = y_start%256;
-    *p++ = y_start/256;
-
-    err = dev_wakeup(dev);
-    if( err != ESP_OK )
-        return err;
-
-    vTaskDelay(pdMS_TO_TICKS(10));
-
-    cmd = part_cmds;
-    while( cmd->data.data || cmd->cmd )
-    {
-        if( (err = dev_write(dev, cmd)) != ESP_OK )
-            break;
-        cmd++;
-    }
-
-    err = dev_write(dev, &data_cmd);
-    if( err != ESP_OK )
-        return err;
-
-    cmd = refresh_cmds;
-    while( cmd->data.data || cmd->cmd )
-    {
-        if( (err = dev_write(dev, cmd)) != ESP_OK )
-            break;
-        cmd++;
-    }
-
-    err = dev_sleep(dev);
-
-    return err;
+    return dev_draw(dev, data, len, 1);
 }/*}}}*/
-
 
 
 esp_err_t me_gd_dev_init(me_gd_dev_t *dev, me_gd_dev_conf_t *cf)/*{{{*/
@@ -369,6 +316,12 @@ esp_err_t me_gd_dev_init(me_gd_dev_t *dev, me_gd_dev_conf_t *cf)/*{{{*/
     dev->pin_reset  = cf->pin_rst;
     dev->cmd_set    = (me_gd_models_cmd_set+cf->model);
 
+    err = dev_clear(dev, ((me_gd_models[cf->model].height
+                        * me_gd_models[cf->model].width
+                        * me_gd_models[cf->model].bpp) / 8));
+
 init_err:
     return err;
 }/*}}}*/
+
+

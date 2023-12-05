@@ -87,7 +87,7 @@ static me_gd_dev_cmd_t gdey0213B74_init[] = {/*{{{*/
     me_gd_dev_cmd_null
 };/*}}}*/
 static me_gd_dev_cmd_t gdey029T94_init[] = {/*{{{*/
-    { 0x01, me_str("\x27\x01\x00")}, // (height-1)%256,height-1)/256,00
+    { 0x01, me_str("\x27\x01\x00")}, // (height-1)%256,(height-1)/256,00
     { 0x11, me_str("\x01")},
     { 0x44, me_str("\x00\x0F")}, // 00,width/8-1
     { 0x45, me_str("\x27\x01\x00\x00")}, // (height-1)%256,height-1)/256,00,00
@@ -97,6 +97,16 @@ static me_gd_dev_cmd_t gdey029T94_init[] = {/*{{{*/
     { 0x4E, me_str("\x00")},
     { 0x4F, me_str("\x27\x01")}, // (height-1)%256,height-1)/256
     { 0x22, me_str("\xf7")}, // update control sequence
+    me_gd_dev_cmd_null
+};/*}}}*/
+static me_gd_dev_cmd_t gdey029T94_init_fast[] = {/*{{{*/
+    { 0x18, me_str("\x80")}, // read temperature
+    { 0x22, me_str("\xB1")}, // load temperature
+    { 0x20, me_str_null }, // activate update sequence
+    { 0x1A, me_str("\x64\x00")}, // write temperature
+    { 0x22, me_str("\x91")}, // load temperature
+    { 0x20, me_str_null }, // activate update sequence
+    { 0x22, me_str("\xC7") }, // update control sequence
     me_gd_dev_cmd_null
 };/*}}}*/
 
@@ -131,6 +141,7 @@ me_gd_dev_cmd_set_t me_gd_models_cmd_set[] = {/*{{{*/
             .reset    = { 0x12, me_str_null },
             .sleep    = { 0x10, me_str("\x01")},
             .update   = { 0x24, me_str_null },
-            .init     = gdey029T94_init
+            .init     = gdey029T94_init,
+            .init_fast = gdey029T94_init_fast,
         }
 };/*}}}*/
