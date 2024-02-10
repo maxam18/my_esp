@@ -50,7 +50,8 @@ void me_gd_vline(me_gd_t *gd, int x, int y, int h, uint8_t color);
 void me_gd_square(me_gd_t *gd, int x, int y, int width, int height, uint8_t color);
 void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height);
 void me_gd_invert_part(me_gd_t *gd, int x, int y, int width, int height);
-void me_gd_image(me_gd_t *gd, int x, int y, int width, uint8_t hbytes, uint8_t *data);
+void me_gd_image(me_gd_t *gd, int x, int y, int cwidth, uint8_t hbytes, uint8_t *data);
 void me_gd_box(me_gd_t *gd, int x, int y, int width, int height, uint8_t color);
+void me_gd_image_set(me_gd_t *gd, int x, int y, int width, uint8_t hbytes, uint8_t *sp);
 
 #endif

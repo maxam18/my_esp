@@ -7,10 +7,26 @@
 
 #include <me_gd_font.h>
 
+#include <me_gd_font_num40.h>
+#include <me_gd_font_num24.h>
 #include <me_gd_font_num32.h>
 #include <me_gd_font_num16.h>
 #include <me_gd_font_ru16.h>
 #include <me_gd_font_en16.h>
+
+me_gd_font_t me_gd_font_num40[] = {
+    {
+        .cbytes = font_num40_cwidth*font_num40_cheight,
+        .chars  = font_num40_bits,
+        .cwidth = font_num40_cwidth,
+        .hbytes = font_num40_cheight,
+        .hchar  = '9',
+        .lchar  = '0'
+    },
+    {
+        .chars  = 0
+    }
+};
 
 me_gd_font_t me_gd_font_num32[] = {
     {
@@ -18,6 +34,20 @@ me_gd_font_t me_gd_font_num32[] = {
         .chars  = font_num32_bits,
         .cwidth = font_num32_cwidth,
         .hbytes = font_num32_cheight,
+        .hchar  = '9',
+        .lchar  = '0'
+    },
+    {
+        .chars  = 0
+    }
+};
+
+me_gd_font_t me_gd_font_num24[] = {
+    {
+        .cbytes = font_num24_cwidth*font_num24_cheight,
+        .chars  = font_num24_bits,
+        .cwidth = font_num24_cwidth,
+        .hbytes = font_num24_cheight,
         .hchar  = '9',
         .lchar  = '0'
     },

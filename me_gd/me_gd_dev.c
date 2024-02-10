@@ -21,7 +21,7 @@
 #include <me_debug.h>
 #include <me_gd_dev.h>
 
-#ifdef CONFIG_ME_DEBUG/*{{{*/
+#ifdef CONFIG_ME_GD_DEBUG/*{{{*/
 void debug_cmd(me_gd_dev_cmd_t *cmd)
 {
     char    buf[128], *p;

@@ -11,7 +11,7 @@
 #include <stdint.h>
 
 /* NOTE: font chars is a bitmap of chars from lchar to hchar */
-#define ME_GD_FONT_MAX_CBYTES       (32*32/8)
+#define ME_GD_FONT_MAX_CBYTES       (32*40/8)
 #define me_gd_font_char_ext_begin   224
 #define me_gd_font_char_ext_end     255
 
@@ -29,6 +29,8 @@ typedef struct
 
 extern me_gd_font_t me_gd_font_full16[];
 extern me_gd_font_t me_gd_font_num32[];
+extern me_gd_font_t me_gd_font_num24[];
+extern me_gd_font_t me_gd_font_num40[];
 
 #endif
 

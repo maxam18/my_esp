@@ -49,7 +49,7 @@ static void bw_text(me_gd_t *gd, int x, int y, me_gd_font_t *fonts, char *txt, u
     if( y > (gd->hbytes - font->hbytes) )
         y = gd->hbytes - font->hbytes;
 
-    me_debug("GD", "PRINT_STR. x: %d, y: %d, str(%d): '%.*s'", x, y, len, len, txt);
+//    me_debug("GD", "PRINT_STR. x: %d, y: %d, str(%d): '%.*s'", x, y, len, len, txt);
     dp = (gd->bitmap + x*(int)gd->hbytes + y);
     while( len-- )
     {
@@ -103,7 +103,7 @@ static void bw_vline(me_gd_t *gd, int x, int y, int h, uint8_t color)/*{{{*/
 {
     uint8_t     c, *p = gd->bitmap + x*gd->hbytes + y/8;
 
-    me_debug("GD", "Vertical line. x:%d, y:%d, size: %d", x, y, h);
+    //me_debug("GD", "Vertical line. x:%d, y:%d, size: %d", x, y, h);
 
     y %= 8;
     if( y )
@@ -156,7 +156,7 @@ static void bw_hline(me_gd_t *gd, int x, int y, int w, uint8_t color)/*{{{*/
 {
     uint8_t    c, m, *p = (gd->bitmap + x*gd->hbytes + y/8);
 
-    me_debug("GD", "Horizontal line. x:%d, y:%d, size: %d", x, y, w);
+    //me_debug("GD", "Horizontal line. x:%d, y:%d, size: %d", x, y, w);
 
     y = 7 - (y % 8);
     m = 1 << y;
@@ -198,7 +198,7 @@ void me_gd_box(me_gd_t *gd, int x, int y, int width, int height, uint8_t color)/
     } else 
     {
         while( width-- )
-           cl_vline(gd, x++, y, height, color);
+            cl_vline(gd, x++, y, height, color);
     }
 }/*}}}*/
 
@@ -207,7 +207,7 @@ void me_gd_invert(me_gd_t *gd, int x, int y, int width, int height)/*{{{*/
 {
     uint8_t     *dp, h, c;
 
-    me_debug("GD", "Invert x: %d, y: %d, w: %d, h: %d", x, y, width, height);
+//    me_debug("GD", "Invert x: %d, y: %d, w: %d, h: %d", x, y, width, height);
 
     y      /= 8;
     height /= 8;
@@ -250,6 +250,31 @@ void me_gd_num(me_gd_t *gd, int x, int y, me_gd_font_t *font, int num)/*{{{*/
         p++;
     
     me_gd_text(gd, x, y, font, p, n);
+}/*}}}*/
+
+
+void me_gd_image_set(me_gd_t *gd, int x, int y, int width, uint8_t hbytes, uint8_t *sp)/*{{{*/
+{
+    uint8_t  h, *dp;
+
+    if( x + width > gd->width )
+        return;
+
+    y /= 8;
+    if( y + hbytes >  gd->hbytes )
+        return;
+
+me_debug("GD", "Draw image at x: %d, y: %d, w: %d, h: %d"
+             , x, y, width, hbytes);
+    while( width-- )
+    {
+        dp = gd->bitmap + (x++)*gd->hbytes + y;
+        h = hbytes;
+        while( h-- > 0 )
+        {
+            *dp++ ^= *sp++;
+        }
+    }
 }/*}}}*/
 
 
