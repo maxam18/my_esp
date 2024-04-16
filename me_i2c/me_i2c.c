@@ -6,7 +6,7 @@
  */
 
 #include "esp_system.h"
-#include "esp32/rom/ets_sys.h" /* ets_delay_us */
+//#include "esp32/rom/ets_sys.h" /* ets_delay_us */
 #include "me_i2c.h"
 
 #include "me_debug.h"
