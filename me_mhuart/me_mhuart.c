@@ -96,8 +96,8 @@ static esp_err_t read_resp(int uart_num, uint8_t *data)
 
 int me_mhuart_read_concentration(int uart_num, uint8_t cmd)
 {
-    int     n;
-    u_char  data[MH_UART_BUF_SIZE];
+    int             n;
+    unsigned char   data[MH_UART_BUF_SIZE];
 
     if( send_req(uart_num, cmd, NULL) )
         return -1;
