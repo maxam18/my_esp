@@ -24,8 +24,8 @@ typedef struct me_w2812_encoder_s {
 typedef struct me_w2812_rgb_s
 {
     uint8_t             green;
-    uint8_t             blue;
     uint8_t             red;
+    uint8_t             blue;
 } me_w2812_rgb_t;
 
 typedef struct me_w2812_s
@@ -44,5 +44,6 @@ esp_err_t me_w2812_deinit(me_w2812_t *led);
 
 void me_w2812_set_led(me_w2812_t *led, uint8_t start, uint8_t count, uint8_t r, uint8_t g, uint8_t b);
 void me_w2812_set_all(me_w2812_t *led, uint8_t r, uint8_t g, uint8_t b);
+void me_w2812_set_vlevel(me_w2812_t *led, int level, int max, uint8_t r, uint8_t g, uint8_t b);
 
 #endif

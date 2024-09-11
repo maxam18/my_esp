@@ -236,3 +236,34 @@ void me_w2812_set_all(me_w2812_t *led, uint8_t r, uint8_t g, uint8_t b)
 {
     me_w2812_set_led(led, 0, led->num_leds, r, g, b);
 }
+
+
+void me_w2812_set_vlevel(me_w2812_t *led, int level, int max, uint8_t r, uint8_t g, uint8_t b)
+{
+    uint8_t         cnt = led->num_leds;
+    me_w2812_rgb_t  *p  = led->leds;
+
+    assert(led->leds);
+
+    max = max / led->num_leds;
+
+    while( cnt-- )
+    {
+        if( level > max )
+        {
+            p->red   = r;
+            p->green = g;
+            p->blue  = b;
+        } else if( level > 0 ) {
+            p->red   = (r >> 1);
+            p->green = (g >> 1);
+            p->blue  = (b >> 1);
+        } else {
+            p->red   = 0;
+            p->green = 0;
+            p->blue  = 0;
+        }
+        level -= max;
+        p++;
+    } 
+}
