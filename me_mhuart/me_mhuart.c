@@ -4,7 +4,7 @@
  * Author: Max Amzarakov (maxam18 _at_ gmail _._ com)
  * Copyright (c) 2019 ..."
  */
-
+#include <stdint.h>
 #include "esp_system.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -52,8 +52,8 @@ static esp_err_t send_req(int uart_num, uint8_t req, uint8_t *reqval)
     cmd[8] = checksum(cmd);
 
     me_debug( "MHUART", "Send: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
-            , (u_int)cmd[0], (u_int)cmd[1], (u_int)cmd[2], (u_int)cmd[3]
-            , (u_int)cmd[4], (u_int)cmd[5], (u_int)cmd[6], (u_int)cmd[7], (u_int)cmd[8]);
+            , (unsigned int)cmd[0], (unsigned int)cmd[1], (unsigned int)cmd[2], (unsigned int)cmd[3]
+            , (unsigned int)cmd[4], (unsigned int)cmd[5], (unsigned int)cmd[6], (unsigned int)cmd[7], (unsigned int)cmd[8]);
 
     n = uart_write_bytes(uart_num, (const char *) cmd, 9);
 
@@ -74,8 +74,8 @@ static esp_err_t read_resp(int uart_num, uint8_t *data)
     n = uart_read_bytes(uart_num, data, MH_UART_BUF_SIZE, pdMS_TO_TICKS(60));
 
     me_debug( "MHUART", "Recv: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X"
-            , (u_int)data[0], (u_int)data[1], (u_int)data[2], (u_int)data[3]
-            , (u_int)data[4], (u_int)data[5], (u_int)data[6], (u_int)data[7], (u_int)data[8]);
+            , (unsigned int)data[0], (unsigned int)data[1], (unsigned int)data[2], (unsigned int)data[3]
+            , (unsigned int)data[4], (unsigned int)data[5], (unsigned int)data[6], (unsigned int)data[7], (unsigned int)data[8]);
 
     if( n != 9 )
     {
