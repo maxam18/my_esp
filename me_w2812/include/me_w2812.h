@@ -11,7 +11,6 @@
 #include <esp_err.h>
 #include <stdint.h>
 #include "driver/rmt_encoder.h"
-#include "soc/gpio_num.h"
 
 typedef struct me_w2812_encoder_s {
     rmt_encoder_t           base_encoder;

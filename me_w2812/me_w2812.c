@@ -123,7 +123,7 @@ esp_err_t me_w2812_init(me_w2812_t *led)
     rmt_copy_encoder_config_t copy_encoder_config = {};
 
     led->encoder = calloc(1, sizeof(me_w2812_encoder_t));
-    led->leds = calloc(1, sizeof(me_w2812_rgb_t)*led->num_leds);
+    led->leds = calloc(1, sizeof(me_w2812_rgb_t)*(led->num_leds+1));
     if( !led->leds || !led->encoder )
     {
         err = ESP_ERR_NO_MEM;
@@ -217,6 +217,9 @@ esp_err_t me_w2812_update(me_w2812_t *led)
 void me_w2812_set_led(me_w2812_t *led, uint8_t start, uint8_t count, uint8_t r, uint8_t g, uint8_t b)
 {
     assert(led->leds);
+
+    if( (start + count) > led->num_leds )
+        return;
 
     while( count-- )
     {
