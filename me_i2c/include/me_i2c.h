@@ -26,31 +26,21 @@
 #ifndef _ME_I2C_H
 #define _ME_I2C_H
 
+#include <sdkconfig.h>
+#include <freertos/FreeRTOS.h>
+
+#define CONFIG_ME_I2C_USE_I2C_MASTER
+#ifdef CONFIG_ME_I2C_USE_I2C_MASTER
+#include <driver/i2c_master.h>
+#else
 #include "driver/i2c.h"
 #include "sdkconfig.h"
+#endif 
 
 typedef enum {
     ME_I2C_PULLUP_ENABLE  = GPIO_PULLUP_ENABLE,
     ME_I2C_PULLUP_DISABLE = GPIO_PULLUP_DISABLE
 } me_i2c_pullup_t;
-
-
-/**
- * @brief microseconds delay. 
- *        RTOS delay (`vTaskDelay`) is 1ms long. 
- *        Asking 1ms could result either in 1ms or 0 ms delay
- *        This macro selects `vTaskDelay` in the case 2+ millis delay  
- *
- * @param us      delay in microseconds
- */
-
-#define us_delay( us )    \
-    { \
-        if( us_delay > 2000 ) \
-            vTaskDelay( us / 1000 / portTICK_PERIOD_MS ); \
-        else \
-            ets_delay_us( us ); \
-    }
 
 /**
  * @brief Initialize i2c
@@ -97,7 +87,11 @@ esp_err_t me_i2c_reset_timeout(i2c_port_t port, int us);
  *     - ESP_ERR_INVALID_STATE I2C driver not installed or not in master mode.
  *     - ESP_ERR_TIMEOUT Operation timeout because the bus is busy.
  */
+ #ifdef CONFIG_ME_I2C_USE_I2C_MASTER
+esp_err_t me_i2c_ping(i2c_port_t port, int addr);
+#else
 #define me_i2c_ping(port, addr) me_i2c_write(port, addr, NULL, 0)
+#endif
 
 /**
  * @brief Deinitialize I2C (delete driver)

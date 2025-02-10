@@ -11,16 +11,25 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
-#include <math.h>
 #include <esp_system.h>
 #include <driver/gpio.h>
-#include <esp32/rom/ets_sys.h>
-
-#include <freertos/FreeRTOS.h>
 
 #include <me_hx71x.h>
 
+#if CONFIG_IDF_TARGET_ESP32
+#include <esp32/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include <esp32s2/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32S3
+#include <esp32s3/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include <esp32c3/rom/ets_sys.h>
+#else
+#error "Target unknown"
+#endif
+
 #define me_hx71x_delay()          ets_delay_us(10)
+
 /*
 static void print_bits(int32_t val)
 {

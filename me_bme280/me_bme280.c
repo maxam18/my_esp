@@ -144,9 +144,18 @@ static uint32_t compensate_humidity(me_bme280_calib_t *c, me_bme280_readings_t *
  */
 esp_err_t me_bme280_info(me_bme280_conf_t *conf, uint8_t *data)
 {
+	esp_err_t   err;
     uint8_t req[] = { BME280_REG_ID };
 
-    return me_i2c_req_resp(conf->port, conf->addr, req, 1, data, 2);
+// Reading 0xD0 causes some chips to delay with NACK. Read it seprated
+    err = me_i2c_write(I2C_NUM_0, conf->addr, req, 1);
+	if( err == ESP_OK )
+	{
+    	vTaskDelay(pdMS_TO_TICKS(50));
+    	err = me_i2c_read(I2C_NUM_0, conf->addr, data, 1);
+	}
+
+    return err;
 }
 
 esp_err_t me_bme280_init(me_bme280_conf_t *conf)

@@ -3,15 +3,37 @@ menu "My ESP configurations"
         bool "Enable My ESP Debug"
         default n
 
+    config ME_I2C_DEBUG
+        bool "Enable My ESP I2C Debug"
+        default n
+
+    config ME_I2C_USE_I2C_MASTER
+        bool "Enable My ESP I2C i2c_master support"
+        default n
+
+    config ME_I2C_GLITCH_IGNORE_CNT
+        int "i2c_master glitch ignore"
+        default 7
+        depends on ME_I2C_USE_I2C_MASTER
+        help 
+            Set 7 if unsure
+
+    config ME_I2C_DEF_OP_TIMEOUT_MS
+        int "i2c_master operation timeout (ms)"
+        default 100
+        depends on ME_I2C_USE_I2C_MASTER
+        help 
+            How long to wait for an answer of i2c_master calls
+
     config ME_WIFI_SSID
         string "WiFi SSID"
-        default "messid"
+        default "mhhn"
         help
             SSID (network name) for the example to connect to.
 
     config ME_WIFI_PASSWORD
         string "WiFi Password"
-        default "mepassword"
+        default "DBC7AFEK5V.s"
         help
             WiFi password (WPA or WPA2). Leave blank for AP without credentials
 
@@ -115,4 +137,5 @@ menu "My ESP configurations"
             int "Rotary encoder B pin number"
             default 34
     endmenu
+
 endmenu

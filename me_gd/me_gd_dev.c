@@ -15,11 +15,17 @@
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "hal/spi_types.h"
 
 #include <esp_err.h>
 
 #include <me_debug.h>
 #include <me_gd_dev.h>
+
+// HSPI_HOST is only defined for ESP32 and ESP32-S3
+#ifndef HSPI_HOST
+#define HSPI_HOST SPI2_HOST
+#endif
 
 #ifdef CONFIG_ME_GD_DEBUG/*{{{*/
 void debug_cmd(me_gd_dev_cmd_t *cmd)

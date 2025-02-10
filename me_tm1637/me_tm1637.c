@@ -7,12 +7,25 @@
 #include <string.h>
 #include <math.h>
 #include <driver/gpio.h>
-#include <esp32/rom/ets_sys.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 
 #include <me_tm1637.h>
+
+#if CONFIG_IDF_TARGET_ESP32
+#include <esp32/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include <esp32s2/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32S3
+#include <esp32s3/rom/ets_sys.h>
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include <esp32c3/rom/ets_sys.h>
+#else
+#error "Target unknown"
+#endif
+
+#define me_tm1637_delay()          ets_delay_us(20)
 
 #define TM1637_ADDR_AUTO  0x40
 #define TM1637_ADDR_FIXED 0x44
@@ -111,9 +124,6 @@ static const uint8_t seg_pos[][8] = {
                     { 3, 2, 1, 0, TM1637_SEG_MAX, TM1637_SEG_MAX, TM1637_SEG_MAX, TM1637_SEG_MAX },
                     { 3, 4, 5, 0, 1, 2, TM1637_SEG_MAX, TM1637_SEG_MAX }
 };
-
-//#define me_tm1637_delay()          ets_delay_us(3)
-#define me_tm1637_delay()          ets_delay_us(20)
 
 static void me_tm1637_start(me_tm1637_led_t * led)
 {
