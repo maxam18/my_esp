@@ -96,10 +96,10 @@ esp_err_t me_cq_read()/*{{{*/
 
     me_cq_batt.mv = 2304+(res[3] & ME_CQ_MASK_BATV) * 20;
 
-    if( me_cq_batt.status )
+    if( me_cq_batt.charging )
     {
         // charging 
-        switch( me_cq_batt.status & ME_BATT_STS_CHRG_MASK )
+        switch( me_cq_batt.charging & ME_BATT_STS_CHRG_MASK )
         {
             case ME_BATT_STS_CHRG_NO:
                 me_cq_batt.level = 0;
@@ -115,13 +115,16 @@ esp_err_t me_cq_read()/*{{{*/
             break;
         }
     } else {
-        // should never be negative
+        // might be negative iif batt mV < extra low
         i16 = 100 * (me_cq_batt.mv - me_cq_batt_info.level_extra_low) / 
                     (me_cq_batt_info.level_max - me_cq_batt_info.level_extra_low);
         if( i16 > 100 )
             i16 = 100;
+        else if( i16 < 0 )
+            i16 = 0;
+
         me_cq_batt.level = i16;
-    } 
+    }
     dd("Batt. V: %d mV, lvl: %d, T: %d, Chg: 0x%02X, Stu: 0x%02X"
         , me_cq_batt.mv, me_cq_batt.level, me_cq_batt.temp, me_cq_batt.charging, me_cq_batt.status);
 
