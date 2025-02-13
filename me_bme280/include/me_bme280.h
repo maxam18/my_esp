@@ -144,5 +144,18 @@ esp_err_t me_bme280_info(me_bme280_conf_t *conf, uint8_t *data);
  */
 esp_err_t me_bme280_read(me_bme280_conf_t *conf, me_bme280_readings_t *readings);
 
+/**
+ * @brief Put sensor to sleep
+ *        
+ *
+ * @param conf      bme280_conf_t pointer
+ * @param mode  	1 - put to sleep, 0 - wakeup from
+ *
+ * @return
+ *     - ESP_OK     Success
+ *     - ESP_ERR_*  returned by me_i2c_read
+ */
+esp_err_t me_bme280_sleep(me_bme280_conf_t *conf, int mode);
+
 #endif
 

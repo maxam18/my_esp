@@ -27,13 +27,13 @@ menu "My ESP configurations"
 
     config ME_WIFI_SSID
         string "WiFi SSID"
-        default "mhhn"
+        default "wifissid"
         help
             SSID (network name) for the example to connect to.
 
     config ME_WIFI_PASSWORD
         string "WiFi Password"
-        default "DBC7AFEK5V.s"
+        default "wpa2password"
         help
             WiFi password (WPA or WPA2). Leave blank for AP without credentials
 

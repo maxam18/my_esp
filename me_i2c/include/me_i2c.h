@@ -29,9 +29,9 @@
 #include <sdkconfig.h>
 #include <freertos/FreeRTOS.h>
 
-#define CONFIG_ME_I2C_USE_I2C_MASTER
 #ifdef CONFIG_ME_I2C_USE_I2C_MASTER
 #include <driver/i2c_master.h>
+#define me_i2c_bus_handle_t     i2c_master_bus_handle_t
 #else
 #include "driver/i2c.h"
 #include "sdkconfig.h"

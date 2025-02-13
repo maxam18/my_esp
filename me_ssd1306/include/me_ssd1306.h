@@ -114,4 +114,17 @@ esp_err_t me_ssd1306_8x8_string(me_ssd1306_conf_t *conf, char *str, int row);
  */
 esp_err_t me_ssd1306_8x8_text(me_ssd1306_conf_t *conf, const char *text);
 
+/**
+ * @brief Print lines of characters of 8x8 pixels size on SSD1306 OLED
+ *
+ * @param conf    me_ssd1306_conf_t pointer
+ * @param mode    1 - wakeup, 0 - put to sleep
+ *
+ * @return
+ *     - ESP_OK     Success
+ *     - ESP_ERR_INVALID_ARG row or column is out of range
+ *     - ESP_ERR_*  returned by me_i2c_read
+ */
+esp_err_t me_ssd1306_onoff(me_ssd1306_conf_t *conf, int mode);
+
 #endif

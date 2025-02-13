@@ -94,6 +94,17 @@ esp_err_t me_ssd1306_contrast(me_ssd1306_conf_t *c, int val)
 }
 
 
+esp_err_t me_ssd1306_onoff(me_ssd1306_conf_t *c, int val)
+{
+	uint8_t     req[1];
+
+    req[0] = val ? 0xAF : 0xAE;
+
+    return me_i2c_write(c->port, c->addr, req, sizeof(req));
+}
+
+
+
 static esp_err_t reset_row(me_ssd1306_conf_t *c, uint8_t row)
 {
     uint8_t     req[] =  { ME_SSD1306_CMD_STREAM, 0x00, 0x10, 0xB0 };

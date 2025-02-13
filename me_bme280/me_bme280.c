@@ -6,6 +6,7 @@
  */
 
 #include "esp_err.h"
+#include "me_i2c.h"
 #include <me_bme280.h>
 
 /**\name BME280 chip identifier */
@@ -38,6 +39,7 @@
 #define	BME280_SLEEP_MODE			0x00
 #define	BME280_FORCED_MODE			0x01
 #define	BME280_NORMAL_MODE			0x03
+
 
 /**\name StandBy time for NORMAL MODE */
 #define BME280_T_SB_10				0xC0 /* Note: 1000 ms for BMP280 */
@@ -157,6 +159,30 @@ esp_err_t me_bme280_info(me_bme280_conf_t *conf, uint8_t *data)
 
     return err;
 }
+
+
+esp_err_t me_bme280_sleep(me_bme280_conf_t *c, int mode)
+{
+	esp_err_t 		err;
+	uint8_t 		reg = { BME280_REG_CTRL_MEAS };
+	uint8_t 		res;
+
+	err = me_i2c_req_resp(c->port, c->addr, &reg, 1, &res, 1);
+	if( err == ESP_OK )
+	{
+		res = res & 0xFC;
+		if( mode )
+		{
+			res |= BME280_SLEEP_MODE;
+		} else 
+			res |= BME280_NORMAL_MODE;
+
+		err = me_i2c_write_reg(c->port, c->addr, reg, res);
+	}
+
+	return err;
+}
+
 
 esp_err_t me_bme280_init(me_bme280_conf_t *conf)
 {
