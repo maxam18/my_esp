@@ -24,41 +24,48 @@
 
 #define HTU2x_USER_HIGHRES     0x02 /* 14 bits and OTP disable */
 
-esp_err_t me_htu2x_read(me_htu2x_config_t *c, double *temp, double *relh)
+static esp_err_t htu2x_read(me_htu2x_config_t *c, int reg, int32_t *signal)
 {
     esp_err_t   err;
 	uint8_t     buf[4];
-    int32_t     i32;
 
     buf[0] = HTU2x_REG_TEMP_ASYNC;
     err = me_i2c_write(c->port, c->addr, buf, 1);
-    if( err != ESP_OK )
-        return err;
-
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    err = me_i2c_read(c->port, c->addr, buf, 3);
-    if( err != ESP_OK )
+    if( err == ESP_OK )
     {
-        return err;
+        vTaskDelay(pdMS_TO_TICKS(100));
+
+        err = me_i2c_read(c->port, c->addr, buf, 3);
+
+        *signal = (buf [0] << 8 | buf [1]) & 0xFFFC;
+    } else
+    {
+        *signal = 9999*65535;
     }
 
-	i32   = (buf [0] << 8 | buf [1]) & 0xFFFC;
-    *temp = -46.85 + (175.72 * ((double)i32/65535.0));
+    return err;
+}
 
-    buf[0] = HTU2x_REG_HUMID_ASYNC;
-    err = me_i2c_write(c->port, c->addr, buf, 1);;
-    if( err != ESP_OK )
-        return err;
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+esp_err_t me_htu2x_read_temp(me_htu2x_config_t *c, double *val)
+{
+    esp_err_t   err;
+    int32_t     i32;
 
-    err = me_i2c_read(c->port, c->addr, buf, 3);
-    if( err != ESP_OK )
-        return err;
+    err = htu2x_read(c, HTU2x_REG_TEMP_ASYNC, &i32);
+    *val = -46.85 + (175.72 * ((double)i32/65535.0));
+    
+    return err;
+}
 
-    i32   = (buf [0] << 8 | buf [1]) & 0xFFFC;
-	*relh = -6.0 + (125.0 * ((double)i32/65535.0));
+
+esp_err_t me_htu2x_read_humid(me_htu2x_config_t *c, double *val)
+{
+    esp_err_t   err;
+    int32_t     i32;
+
+    err = htu2x_read(c, HTU2x_REG_HUMID_ASYNC, &i32);
+    *val = -46.85 + (175.72 * ((double)i32/65535.0));
 
     return err;
 }

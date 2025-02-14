@@ -22,6 +22,7 @@ typedef struct
 
 esp_err_t me_htu2x_init(me_htu2x_config_t *cfg);
 
-esp_err_t me_htu2x_read(me_htu2x_config_t *cfg, double *temp, double *relh);
+esp_err_t me_htu2x_read_temp(me_htu2x_config_t *c, double *val);
+esp_err_t me_htu2x_read_humid(me_htu2x_config_t *c, double *val);
 
 #endif
