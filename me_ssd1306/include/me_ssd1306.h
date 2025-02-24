@@ -100,6 +100,20 @@ esp_err_t me_ssd1306_scroll(me_ssd1306_conf_t *conf, me_ssd1306_scroll_t dir);
 esp_err_t me_ssd1306_8x8_string(me_ssd1306_conf_t *conf, char *str, int row);
 
 /**
+ * @brief Print one line of characters of 8x16 pixels size on SSD1306 OLED
+ *
+ * @param conf    me_ssd1306_conf_t pointer
+ * @param str     characters to display (NULL terminated)
+ * @param row     row number to print characters
+ *
+ * @return
+ *     - ESP_OK     Success
+ *     - ESP_ERR_INVALID_ARG row or column is out of range
+ *     - ESP_ERR_*  returned by me_i2c_read
+ */
+esp_err_t me_ssd1306_8x16_string(me_ssd1306_conf_t *conf, char *str, int row);
+
+/**
  * @brief Print lines of characters of 8x8 pixels size on SSD1306 OLED
  *
  * @param conf    me_ssd1306_conf_t pointer

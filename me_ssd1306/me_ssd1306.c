@@ -19,6 +19,7 @@
 #include "me_ssd1306.h"
 #include "me_ssd1306_defs.h"
 #include "font8x8_basic.h"
+#include "font8x16_basic.h"
 
 esp_err_t me_ssd1306_init(me_ssd1306_conf_t *c)
 {
@@ -58,6 +59,7 @@ esp_err_t me_ssd1306_init(me_ssd1306_conf_t *c)
 
     return me_i2c_write(c->port, c->addr, req, sizeof(req));
 }
+
 
 esp_err_t me_ssd1306_display_clear(me_ssd1306_conf_t *c)
 {
@@ -104,7 +106,6 @@ esp_err_t me_ssd1306_onoff(me_ssd1306_conf_t *c, int val)
 }
 
 
-
 static esp_err_t reset_row(me_ssd1306_conf_t *c, uint8_t row)
 {
     uint8_t     req[] =  { ME_SSD1306_CMD_STREAM, 0x00, 0x10, 0xB0 };
@@ -145,6 +146,53 @@ esp_err_t me_ssd1306_8x8_string(me_ssd1306_conf_t *c, char *str, int row)
 
     return err;
 }
+
+
+esp_err_t me_ssd1306_8x16_string(me_ssd1306_conf_t *c, char *str, int row)
+{
+    esp_err_t   err;
+    uint8_t     req[9];
+    char       *p;
+    int         line;
+
+    row *= 2;
+    if( row > 64/8 - 1 )
+        return ESP_ERR_INVALID_ARG;
+
+    if( c->flip )
+        row = (c->_rows - row) - 1;
+
+    err = reset_row(c, row);
+    if( err != ESP_OK )
+        return err;
+
+    req[0] = ME_SSD1306_REG_DATA_STREAM;
+
+    for( p = str, line = 128/8; *p && line; p++, line-- )
+    {
+        memcpy(req+1, font8x16_basic_tr[(uint8_t)*p], 8);
+
+        err = me_i2c_write(c->port, c->addr, req, 9);
+        if( err != ESP_OK )
+            break;
+	}
+
+    err = reset_row(c, ++row);
+    if( err != ESP_OK )
+        return err;
+
+    for( p = str, line = 128/8; *p && line; p++, line-- )
+    {
+        memcpy(req+1, font8x16_basic_tr[(uint8_t)*p]+8, 8);
+
+        err = me_i2c_write(c->port, c->addr, req, 9);
+        if( err != ESP_OK )
+            break;
+	}
+
+    return err;
+}
+
 
 esp_err_t me_ssd1306_8x8_text(me_ssd1306_conf_t *c, const char *text)
 {
